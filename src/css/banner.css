@@ -233,15 +233,17 @@ body {
 }
 
 .avatar {
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     border-radius: 50%;
     background: radial-gradient(
         circle at 35% 28%,
         var(--_slate-0),
         var(--_slate-100) 78%
     );
-    border: 1px solid var(--border);
+    border: 5px solid var(--border-brand);
+    overflow: hidden;
+    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -250,6 +252,7 @@ body {
         0 0 0 6px color-mix(in srgb, var(--_crimson-600) 8%, transparent),
         0 12px 30px rgba(0, 0, 0, 0.12);
     overflow: hidden;
+    margin-left: 16px;
 }
 
 /* Anel conic-gradient de acento */
