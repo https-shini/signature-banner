@@ -1,158 +1,147 @@
 # Guia de Personalização
 
-Este documento explica em detalhes todas as opções de customização do **Signature Banner**.
+Todas as opções de customização do **Signature Banner**.
 
 ---
 
-## 1. Edição via painel visual
+## 1. Painel visual
 
-Abra `index.html` no navegador. O painel abaixo do banner permite editar:
+Abra `index.html`. O painel é dividido em seções recolhíveis:
 
-- **Conteúdo**: eyebrow, nome, cargo, especializações, tagline, e-mail, site, CTAs, QR
-- **Cores**: fundo, texto primário, texto secundário, acento, bordas
-- **Foto**: upload de imagem local (substitui o monograma)
+- **Aparência** — tema (Claro/Escuro/Auto), paleta de acento e cores por token.
+- **Conteúdo** — nome, cargo, empresa, eyebrow, specs, tagline, e-mail, site, QR.
+- **Mídia** — foto de perfil (substitui o monograma).
+- **Layout** — mostrar/ocultar QR; animação do cursor (apenas no editor).
+- **Exportação** — formato, resolução, qualidade.
 
-Toda alteração reflete em tempo real no preview.
+Tudo reflete em tempo real. **Exportar/Importar configuração** (em Aparência)
+salva e restaura o estado completo em JSON.
 
 ---
 
-## 2. Edição via `src/js/config.js`
+## 2. `src/js/config.js`
 
-Para que suas personalizações persistam ao recarregar a página — especialmente útil para versionar no repositório — edite o arquivo `src/js/config.js`.
+Único arquivo a editar para persistir personalizações.
 
-### `defaults` — conteúdo do banner
+### `defaults` — conteúdo
 
-| Chave | Descrição | Sintaxe especial |
-|-------|-----------|-----------------|
-| `eyebrow` | Rótulo monospace acima do nome | UPPERCASE recomendado |
-| `name` | Nome completo | Use `**Texto**` para negrito (Fraunces 500) |
-| `role` | Cargo principal em destaque | — |
-| `specs` | Especializações em linha | Separe com `;` (ponto-e-vírgula) |
-| `tagline` | Frase curta de posicionamento | Use `<br>` para quebrar a linha |
-| `email` | Endereço de e-mail | Vira `mailto:` automaticamente |
-| `site` | Domínio ou URL do site | `https://` adicionado se ausente |
-| `cta1Text` | Texto do botão primário (crimson) | — |
-| `cta1Link` | Link do botão primário | URL completa |
-| `cta2Text` | Texto do botão secundário (indigo) | — |
-| `cta2Link` | Link do botão secundário | URL completa |
-| `qrLabel` | Rótulo mono abaixo do QR | UPPERCASE recomendado |
-| `qrUrl` | URL codificada no QR Code | URL completa |
+| Chave | Descrição | Sintaxe |
+|-------|-----------|---------|
+| `eyebrow` | Rótulo mono acima do nome | UPPERCASE recomendado |
+| `name` | Nome completo | `**Texto**` para negrito |
+| `role` | Cargo principal | — |
+| `empresa` | Empresa (opcional) | aparece ao lado do cargo quando preenchida |
+| `specs` | Especializações | separe com `;` |
+| `tagline` | Frase de posicionamento | `<br>` quebra linha |
+| `email` | E-mail | vira `mailto:` |
+| `site` | Site exibido | `https://` adicionado se ausente |
+| `qrUrl` | URL do QR | URL completa |
 
-### `colors` — paleta de cores
+### `theme` — gestão central de temas (fonte única de cores)
 
-| Chave | Papel no banner | Padrão |
-|-------|----------------|--------|
-| `background` | Superfície do banner | `#ffffff` |
-| `textPrimary` | Nome, cargo, botão primário (texto) | `#0f172a` |
-| `textSecondary` | Tagline, especializações, contato | `#475569` |
-| `accent` | Rail, botão primário, anel do avatar, QR, bullets | `#e11d48` |
-| `border` | Borda do banner, divisor do QR | `#e6e8ee` |
+| Chave | Descrição |
+|-------|-----------|
+| `mode` | `"light"`, `"dark"` ou `"auto"` (segue `prefers-color-scheme`) |
+| `palette` | chave de `palettes` aplicada ao acento |
+| `palettes` | mapa `nome → { accent, signal }` (acento + acento secundário) |
+| `tokens` | mapa `tokenSemântico → { light, dark }` em hex |
 
-> A cor `textTertiary` (`--text-3`, usado em labels mono e eyebrow) é derivada de `textSecondary` via CSS e não é exposta no config. Para alterá-la, edite `--text-3` em `src/css/banner.css`.
+Tokens semânticos e seu papel no banner:
 
-### `export` — configurações do PNG
+| Token | Papel |
+|-------|-------|
+| `background` | fundo do banner |
+| `textPrimary` | nome, cargo |
+| `textSecondary` | tagline, specs, contato |
+| `accent` | rail, ícones, bullets, QR |
+| `border` | bordas e divisores |
+
+Todas as cores do banner derivam de `theme.tokens`. O `BannerTheme` (theme.js)
+aplica a variante do modo efetivo nas CSS vars locais do banner
+(`--void`, `--text`, `--text-2`, `--accent`, `--border`) e alterna
+`body.light-mode` para a interface acompanhar.
+
+> Os tokens derivados `--text-3` (eyebrow/labels), `--accent-soft` e
+> `--border-brand` são calculados via `color-mix()` no CSS a partir de
+> `--text-2`/`--accent`, então acompanham as cores automaticamente.
+
+### `export` — exportação
 
 | Chave | Descrição | Padrão |
 |-------|-----------|--------|
-| `scale` | Fator de escala (1 = 1200×320, 2 = 2400×640, 3 = 3600×960) | `2` |
-| `filename` | Nome do arquivo baixado | `'banner-assinatura.png'` |
+| `format` | `"png"` / `"jpeg"` / `"webp"` | `"png"` |
+| `quality` | 0..1 (JPEG/WebP) | `0.92` |
+| `defaultSize` | `small`/`medium`/`large`/`auto`/`custom` | `"medium"` |
+| `custom` | `{ width, height, preserveAspect }` em px | 2400×640 |
+| `filename` | nome do arquivo (extensão automática) | — |
 
-### `brand` — tokens de identidade visual
+### `brand` — identidade
 
 | Chave | Descrição | Padrão |
 |-------|-----------|--------|
-| `signal` | Cor do botão secundário e borda indigo | `'#4f46e5'` |
-| `fontSans` | Font stack sans-serif | `'Inter', ...` |
-| `fontSerif` | Font stack serif display | `'Fraunces', ...` |
-| `fontMono` | Font stack monospace | `'JetBrains Mono', ...` |
-| `bannerWidth` | Largura lógica do banner em px | `1200` |
-| `bannerHeight` | Altura lógica do banner em px | `320` |
-| `borderRadius` | Arredondamento do card do banner | `16` |
+| `fontSans` / `fontSerif` / `fontMono` | font stacks | Inter / Fraunces / JetBrains Mono |
+| `bannerWidth` / `bannerHeight` | dimensões lógicas | 1200 / 320 |
+| `borderRadius` | arredondamento | 16 |
 
 ---
 
-## 3. Troca de paleta de cores completa
+## 3. Criar um tema personalizado
 
-Para uma identidade diferente (ex: azul marinho + dourado), altere em `config.js`:
+Edite as variantes em `theme.tokens` e/ou adicione uma paleta:
 
 ```js
-colors: {
-  background:    '#0a0f1e',   // fundo escuro
-  textPrimary:   '#f0f4ff',
-  textSecondary: '#94a3b8',
-  accent:        '#f5c542',   // dourado
-  border:        '#1e2a3a',
-},
-brand: {
-  signal: '#60a5fa',          // azul
-  // ...
+theme: {
+  mode: "dark",
+  palette: "oceano",
+  palettes: {
+    // ...existentes
+    oceano: { accent: "#0ea5e9", signal: "#22d3ee" },
+  },
+  tokens: {
+    background:    { light: "#f7fbff", dark: "#04121f" },
+    textPrimary:   { light: "#0b2233", dark: "#e6f6ff" },
+    textSecondary: { light: "#3b5566", dark: "#8fb6c9" },
+    accent:        { light: "#0ea5e9", dark: "#0ea5e9" },
+    border:        { light: "#dcebf5", dark: "#123243" },
+  },
 },
 ```
 
-E ajuste os primitivos de cor no `:root` de `src/css/banner.css` se quiser que os gradientes de glow também mudem.
+Ou, sem editar código, faça a personalização no painel e use
+**Exportar configuração** para gerar um `banner-config.json` versionável.
 
 ---
 
-## 4. Troca de tipografia
+## 4. Tipografia
 
-As fontes são importadas do Google Fonts no topo de `src/css/banner.css`. Para substituí-las:
-
-1. Altere o `@import url(...)` em `banner.css` pela nova fonte
-2. Atualize os campos `fontSans`, `fontSerif` ou `fontMono` em `config.js`
-3. Atualize as referências de fonte hardcoded no `exportPNG()` em `banner.js` (procure por `ctx.font = ...`)
-
----
-
-## 5. Uso offline completo
-
-O projeto já funciona offline exceto pelo carregamento das fontes Google (Inter, JetBrains Mono, Fraunces). Para uso completamente offline:
-
-1. Baixe as fontes em formato WOFF2 (ex: via [google-webfonts-helper](https://gwfh.mranftl.com/))
-2. Coloque em `src/fonts/`
-3. Substitua o `@import` por `@font-face` local em `banner.css`
+As fontes são importadas do Google Fonts no topo de `src/css/banner.css`.
+Para trocar: ajuste o `@import` e os tokens `--font-sans/--font-serif/--font-mono`
+(banner) e `--font-body/--font-mono` (interface). A exportação lê as fontes
+computadas do DOM — não há nomes de fonte fixos no código de export.
 
 ---
 
-## 6. Exemplos de configuração
+## 5. Uso 100% offline
 
-### Desenvolvedor frontend
+O projeto roda offline, exceto pelo download das fontes do Google. Para
+offline total: baixe as fontes em WOFF2, coloque em `src/fonts/` e troque o
+`@import` por `@font-face` local em `banner.css`.
+
+---
+
+## 6. Exemplo de configuração
 
 ```js
 defaults: {
-  eyebrow:  'FRONTEND ENGINEER',
-  name:     'Ana **Oliveira**',
-  role:     'Frontend Developer',
-  specs:    'React; TypeScript; Design Systems',
-  tagline:  'Criando interfaces que encantam<br>e sistemas que escalam.',
-  email:    'ana@email.com',
-  site:     'anaoliveira.dev',
-  cta1Text: 'Ver Projetos',
-  cta1Link: 'https://anaoliveira.dev',
-  cta2Text: 'LinkedIn',
-  cta2Link: 'https://linkedin.com/in/anaoliveira',
-  qrLabel:  'PORTFÓLIO',
-  qrUrl:    'https://anaoliveira.dev',
+  eyebrow: "FRONTEND ENGINEER",
+  name:    "Ana **Oliveira**",
+  role:    "Frontend Developer",
+  empresa: "Acme",
+  specs:   "React; TypeScript; Design Systems",
+  tagline: "Interfaces que encantam<br>e sistemas que escalam.",
+  email:   "ana@email.com",
+  site:    "anaoliveira.dev",
+  qrUrl:   "https://anaoliveira.dev",
 },
-colors: {
-  accent: '#6366f1', // violeta
-},
-```
-
-### Designer UX/UI
-
-```js
-defaults: {
-  eyebrow:  'UX / UI DESIGNER',
-  name:     'Lucas **Ferreira**',
-  role:     'Product Designer',
-  specs:    'Figma; Pesquisa; Prototipação',
-  tagline:  'Design centrado em pessoas,<br>produtos que fazem sentido.',
-  // ...
-},
-colors: {
-  accent: '#f97316', // laranja
-},
-brand: {
-  signal: '#ec4899', // rosa
-},
+theme: { mode: "light", palette: "indigo" },
 ```
