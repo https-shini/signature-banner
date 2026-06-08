@@ -104,12 +104,7 @@ const BannerExporter = (function () {
 
             const cw = clamp(w, LIMITS.minDim, LIMITS.maxDim);
             if (cw !== w)
-                message =
-                    "Largura ajustada para " +
-                    LIMITS.minDim +
-                    "-" +
-                    LIMITS.maxDim +
-                    " px.";
+                message = "Largura ajustada para " + LIMITS.minDim + "-" + LIMITS.maxDim + " px.";
             w = cw;
 
             const preserve = opts.preserveAspect !== false;
@@ -121,11 +116,7 @@ const BannerExporter = (function () {
                 if (ch !== h)
                     message =
                         (message ? message + " " : "") +
-                        "Altura ajustada para " +
-                        LIMITS.minDim +
-                        "-" +
-                        LIMITS.maxDim +
-                        " px.";
+                        "Altura ajustada para " + LIMITS.minDim + "-" + LIMITS.maxDim + " px.";
                 h = ch;
                 uniform = Math.abs(w / W0 - h / H0) < 0.001;
                 if (!uniform)
@@ -306,7 +297,7 @@ const BannerExporter = (function () {
         ctx.fillRect(0, 0, W, H);
     }
 
-    function drawAvatar(ctx, banner, origin, accent) {
+    function drawAvatar(ctx, banner, origin, accent, baseBg) {
         const av = $("avatar");
         if (!av) return;
         const r = rel(av.getBoundingClientRect(), origin);
@@ -314,21 +305,26 @@ const BannerExporter = (function () {
         const rad = Math.min(r.w, r.h) / 2;
         const cs = getComputedStyle(av);
 
+        // Disco deriva do fundo do banner (mantém contraste do monograma
+        // tanto no tema claro quanto no escuro) + leve brilho superior.
         ctx.save();
         ctx.beginPath();
         ctx.arc(r.cx, r.cy, rad, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.fillStyle = baseBg || "#ffffff";
+        ctx.fillRect(r.cx - rad, r.cy - rad, rad * 2, rad * 2);
         const ag = ctx.createRadialGradient(
             r.cx - rad * 0.3,
             r.cy - rad * 0.35,
             0,
             r.cx,
             r.cy,
-            rad * 1.3,
+            rad * 1.25,
         );
-        ag.addColorStop(0, "#ffffff");
-        ag.addColorStop(0.8, cssVar("--_slate-100", "#f1f5f9"));
+        ag.addColorStop(0, withAlpha("#ffffff", 0.08));
+        ag.addColorStop(1, withAlpha("#ffffff", 0));
         ctx.fillStyle = ag;
-        ctx.fill();
+        ctx.fillRect(r.cx - rad, r.cy - rad, rad * 2, rad * 2);
         ctx.restore();
 
         const img = $("avatarImg");
@@ -576,7 +572,9 @@ const BannerExporter = (function () {
         radialGlow(ctx, W * 0.08, H * 1.12, 420, signal, 0.06, W, H);
 
         const railEl = banner.querySelector(".rail");
-        const railW = railEl ? railEl.getBoundingClientRect().width || 4 : 4;
+        const railW = railEl
+            ? railEl.getBoundingClientRect().width || 4
+            : 4;
         const rg = ctx.createLinearGradient(0, 0, 0, H);
         rg.addColorStop(0, withAlpha(accent, 0));
         rg.addColorStop(0.3, accent);
@@ -585,7 +583,7 @@ const BannerExporter = (function () {
         ctx.fillStyle = rg;
         ctx.fillRect(0, 0, railW, H);
 
-        drawAvatar(ctx, banner, origin, accent);
+        drawAvatar(ctx, banner, origin, accent, baseBg);
         drawQRZone(ctx, banner, origin, borderColor, H);
         paintText(ctx, banner, origin);
         await paintIcons(ctx, banner, origin);
