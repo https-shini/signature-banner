@@ -1,32 +1,28 @@
 /**
  * @file config.js
- * @description Arquivo de configuração do Banner de Assinatura.
+ * @description Configuração do Banner de Assinatura.
  *
- * Este é o ÚNICO arquivo que você precisa editar para personalizar o banner.
- * Altere os valores abaixo e abra o index.html no navegador para visualizar
- * as mudanças em tempo real.
+ * Único arquivo que você precisa editar para personalizar o banner.
  *
- * Estrutura do config:
- *  - defaults   → valores iniciais dos campos editáveis
- *  - colors     → paleta de cores padrão
- *  - export     → opções de exportação do PNG
- *  - brand      → tokens visuais de identidade (fontes, raios, etc.)
+ * Seções:
+ *  - defaults    -> conteúdo inicial dos campos
+ *  - colors      -> paleta base (tema claro)
+ *  - appearance  -> tema e paleta de acento iniciais
+ *  - export      -> formato, resolução, qualidade e padrão de arquivo
+ *  - brand       -> tokens visuais (fontes, dimensões, raio)
  *
- * Sintaxe especial nos textos:
- *  - Use **palavra** no campo "name" para destacar em negrito
- *  - Use <br> no campo "tagline" para quebrar a linha
- *  - Separe especializações com ponto-e-vírgula (;)
+ * Sintaxe nos textos:
+ *  - **palavra**   no "name"     -> negrito
+ *  - <br>          no "tagline"  -> quebra de linha
+ *  - ";"           no "specs"    -> separa especializações
  */
 
 const BANNER_CONFIG = {
-    /**
-     * CONTEÚDO — textos, links e contato exibidos no banner.
-     * Estes valores populam o formulário ao carregar a página.
-     */
     defaults: {
         eyebrow: "Software Developer",
         name: "**Guilherme de Souza Cruz**",
         role: "Desenvolvedor de Software",
+        empresa: "", // opcional: aparece ao lado do cargo quando preenchido
         specs: "Full Stack Developer; AI & Automation; Freelancer",
         tagline:
             "Desenvolvendo soluções digitais que transformam desafios em oportunidades.",
@@ -35,41 +31,50 @@ const BANNER_CONFIG = {
         qrUrl: "https://devlinks-rocketseat-five.vercel.app",
     },
 
-    /**
-     * CORES — paleta padrão do banner.
-     * Todos os valores aceitam qualquer cor CSS válida no formato hexadecimal (#rrggbb).
-     * Estas cores também podem ser alteradas em tempo real pelo painel de edição.
-     */
     colors: {
-        background: "#ffffff", // superfície principal do banner
-        textPrimary: "#0f172a", // títulos e texto de alta hierarquia
-        textSecondary: "#475569", // subtítulos, roles e tagline
-        accent: "#e11d48", // cor de marca (crimson) — botão primário, rail, glow
-        border: "#e6e8ee", // cor das bordas e divisores
+        background: "#ffffff",
+        textPrimary: "#0f172a",
+        textSecondary: "#475569",
+        accent: "#e11d48",
+        border: "#e6e8ee",
     },
 
     /**
-     * EXPORTAÇÃO — configurações do PNG gerado.
+     * APARÊNCIA
+     *  theme:         "light" | "dark"
+     *  accentPalette: "crimson" | "indigo" | "emerald" | "amber" | "sky" | "violet"
+     */
+    appearance: {
+        theme: "light",
+        accentPalette: "crimson",
+    },
+
+    /**
+     * EXPORTAÇÃO — afeta apenas o arquivo, nunca o editor.
+     *  format:      "png" | "jpeg" | "webp"
+     *  quality:     0..1 (apenas JPEG/WebP)
+     *  defaultSize: "small"(1x) | "medium"(2x) | "large"(3x) | "auto" | "custom"
+     *  custom:      dimensões em px do modo "Personalizada"
      */
     export: {
-        scale: 1, // fator de escala (2 = 2400×640px)
-        filename: "banner-assinatura-guilherme-cruz.png", // nome do arquivo baixado
+        format: "png",
+        quality: 0.92,
+        defaultSize: "medium",
+        custom: {
+            width: 2400,
+            height: 640,
+            preserveAspect: true,
+        },
+        filename: "banner-assinatura-guilherme-cruz",
     },
 
-    /**
-     * BRAND TOKENS — constantes visuais da identidade.
-     * Altere aqui para mudar o estilo global do banner sem tocar no CSS principal.
-     *
-     * Atenção: signal é a cor de acento secundário (indigo), usada no botão CTA 2.
-     * Ela não está exposta no painel de cores, mas pode ser alterada aqui.
-     */
     brand: {
-        signal: "#4f46e5", // indigo — acento secundário (CTA 2, bordas)
+        signal: "#4f46e5",
         fontSans: "'Inter', -apple-system, 'Segoe UI', sans-serif",
         fontSerif: "'Fraunces', 'Tiempos Headline', Georgia, serif",
         fontMono: "'JetBrains Mono', 'SFMono-Regular', Consolas, monospace",
-        bannerWidth: 1200, // px — largura lógica do banner
-        bannerHeight: 320, // px — altura lógica do banner
-        borderRadius: 16, // px — arredondamento do card do banner
+        bannerWidth: 1200,
+        bannerHeight: 320,
+        borderRadius: 16,
     },
 };

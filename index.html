@@ -4,56 +4,30 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Banner de Assinatura</title>
-
-        <!--
-        Guia rápido de personalização
-        ──────────────────────────────────────────────────────────────────────────────
-        Para customizar o banner, edite APENAS: src/js/config.js
-        Não é necessário alterar este arquivo nem nenhum outro.
-
-        Estrutura do projeto:
-        index.html              ← você está aqui (ponto de entrada)
-        src/
-        css/
-            banner.css          ← estilos (design tokens + layout + painel)
-        js/
-            config.js           ← ★ EDITE AQUI: textos, cores, links, export
-            qrcode.lib.js       ← lib de QR Code (Kazuhiko Arase, MIT) — não edite
-            banner.js           ← lógica principal — não edite
-        docs/
-        CUSTOMIZATION.md      ← guia de personalização
-        DEVELOPMENT.md        ← guia de desenvolvimento
-        ──────────────────────────────────────────────────────────────────────────────
-        -->
-
         <link rel="stylesheet" href="src/css/banner.css" />
     </head>
     <body>
-        <!-- ── Cabeçalho da página ── -->
-        <div>
+        <header class="page-head">
             <div class="page-title">
                 Banner de Assinatura — <b>Guilherme Cruz</b>
             </div>
             <div class="page-sub">
-                // modelo editável · html · css · js · 100% offline
+                // editor · html · css · js · 100% offline
             </div>
-        </div>
+        </header>
 
-        <!-- ── Preview do banner ── -->
+        <!-- ── Preview ── -->
         <div class="stage">
             <div id="banner">
-                <!-- Rail de acento na borda esquerda -->
                 <div class="rail"></div>
 
-                <!-- Coluna 1: Avatar / Monograma -->
                 <div class="avatar-zone">
                     <div class="avatar" id="avatar">
                         <img id="avatarImg" alt="Foto de perfil" />
-                        <span class="monogram" id="monogram">XD</span>
+                        <span class="monogram" id="monogram">GC</span>
                     </div>
                 </div>
 
-                <!-- Coluna 2: Conteúdo principal -->
                 <div class="content">
                     <div class="eyebrow">
                         <span class="slash">//</span>
@@ -65,8 +39,10 @@
                         Guilherme de Souza <b>Cruz</b>
                     </div>
 
-                    <div class="role-primary" id="t-role">
-                        Desenvolvedor de Software
+                    <div class="role-primary">
+                        <span id="t-role">Desenvolvedor de Software</span
+                        ><span class="company-sep" id="t-company-sep"></span
+                        ><span class="company" id="t-company"></span>
                     </div>
 
                     <div class="roles" id="t-specs">
@@ -121,9 +97,7 @@
                         ></a>
                     </div>
                 </div>
-                <!-- /.content -->
 
-                <!-- Coluna 3: QR Code -->
                 <div class="qr-zone">
                     <div class="qr-card">
                         <canvas
@@ -135,159 +109,417 @@
                     </div>
                 </div>
             </div>
-            <!-- /#banner -->
         </div>
-        <!-- /.stage -->
 
         <!-- ── Painel de edição ── -->
-        <div class="panel" role="form" aria-label="Painel de edição do banner">
-            <h2>// editar conteúdo</h2>
-            <div class="grid">
-                <div class="field">
-                    <label for="f-eyebrow">Eyebrow (rótulo mono)</label>
-                    <input type="text" id="f-eyebrow" />
-                </div>
-                <div class="field">
-                    <label for="f-name">Nome Completo</label>
-                    <input type="text" id="f-name" />
-                </div>
-                <div class="field">
-                    <label for="f-role">Cargo principal</label>
-                    <input type="text" id="f-role" />
-                </div>
-                <div class="field">
-                    <label for="f-specs">Especializações (separe por ; )</label>
-                    <input type="text" id="f-specs" />
-                </div>
-                <div class="field">
-                    <label for="f-tagline">Tagline</label>
-                    <input type="text" id="f-tagline" />
-                </div>
-                <div class="field">
-                    <label for="f-email">E-mail</label>
-                    <input type="text" id="f-email" />
-                </div>
-                <div class="field">
-                    <label for="f-site">Site (texto exibido)</label>
-                    <input type="text" id="f-site" />
-                </div>
-                <div class="field">
-                    <label for="f-qrurl">QR aponta para (URL)</label>
-                    <input type="text" id="f-qrurl" />
-                </div>
-                <div class="photo-uploader">
-                    <label class="field-label"
-                        >Foto profissional (opcional)</label
-                    >
-                    <div class="photo-drop-zone" id="photo-drop-zone">
-                        <input
-                            type="file"
-                            id="f-photo"
-                            accept="image/*"
-                            tabindex="-1"
-                        />
-                        <div class="photo-icon" aria-hidden="true">
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            >
-                                <path
-                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
-                                />
-                                <circle cx="12" cy="13" r="4" />
-                            </svg>
-                        </div>
-                        <img class="photo-thumb" id="photo-thumb" alt="" />
-                        <div class="photo-info">
-                            <span class="photo-name" id="photo-name"
-                                >Clique ou arraste uma imagem</span
-                            >
-                            <span class="photo-hint"
-                                >JPG, PNG, WEBP · substitui o monograma</span
-                            >
-                        </div>
-                        <button
-                            class="photo-remove"
-                            id="photo-remove"
-                            type="button"
-                            aria-label="Remover foto"
+        <div
+            class="panel"
+            role="region"
+            aria-label="Painel de edição do banner"
+        >
+            <!-- APARÊNCIA -->
+            <details class="section" open>
+                <summary>
+                    <span class="sec-title">Aparência</span>
+                    <span class="sec-desc">Tema, paleta e cores</span>
+                    <span class="chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="section-body">
+                    <div class="field">
+                        <span class="field-label" id="lbl-theme">Tema</span>
+                        <div
+                            class="segmented"
+                            role="group"
+                            aria-labelledby="lbl-theme"
                         >
-                            <svg
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2.2"
-                                stroke-linecap="round"
+                            <button
+                                type="button"
+                                id="theme-light"
+                                class="seg-btn"
+                                aria-pressed="true"
                             >
-                                <line x1="18" y1="6" x2="6" y2="18" />
-                                <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
+                                Claro
+                            </button>
+                            <button
+                                type="button"
+                                id="theme-dark"
+                                class="seg-btn"
+                                aria-pressed="false"
+                            >
+                                Escuro
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <span class="field-label" id="lbl-palette"
+                            >Paleta de acento</span
+                        >
+                        <div
+                            class="swatches"
+                            role="group"
+                            aria-labelledby="lbl-palette"
+                        >
+                            <button
+                                type="button"
+                                class="swatch"
+                                data-palette="crimson"
+                                style="--sw: #e11d48"
+                                title="Crimson"
+                                aria-label="Crimson"
+                                aria-pressed="true"
+                            ></button>
+                            <button
+                                type="button"
+                                class="swatch"
+                                data-palette="indigo"
+                                style="--sw: #4f46e5"
+                                title="Indigo"
+                                aria-label="Indigo"
+                                aria-pressed="false"
+                            ></button>
+                            <button
+                                type="button"
+                                class="swatch"
+                                data-palette="emerald"
+                                style="--sw: #059669"
+                                title="Esmeralda"
+                                aria-label="Esmeralda"
+                                aria-pressed="false"
+                            ></button>
+                            <button
+                                type="button"
+                                class="swatch"
+                                data-palette="amber"
+                                style="--sw: #d97706"
+                                title="Âmbar"
+                                aria-label="Âmbar"
+                                aria-pressed="false"
+                            ></button>
+                            <button
+                                type="button"
+                                class="swatch"
+                                data-palette="sky"
+                                style="--sw: #0284c7"
+                                title="Azul"
+                                aria-label="Azul"
+                                aria-pressed="false"
+                            ></button>
+                            <button
+                                type="button"
+                                class="swatch"
+                                data-palette="violet"
+                                style="--sw: #7c3aed"
+                                title="Violeta"
+                                aria-label="Violeta"
+                                aria-pressed="false"
+                            ></button>
+                        </div>
+                    </div>
+
+                    <div class="grid">
+                        <div class="field">
+                            <label for="f-void">Plano de fundo</label>
+                            <input type="color" id="f-void" />
+                        </div>
+                        <div class="field">
+                            <label for="f-text">Texto primário</label>
+                            <input type="color" id="f-text" />
+                        </div>
+                        <div class="field">
+                            <label for="f-text2">Texto secundário</label>
+                            <input type="color" id="f-text2" />
+                        </div>
+                        <div class="field">
+                            <label for="f-accent">Acento</label>
+                            <input type="color" id="f-accent" />
+                        </div>
+                        <div class="field">
+                            <label for="f-border">Bordas</label>
+                            <input type="color" id="f-border" />
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- CONTEÚDO -->
+            <details class="section" open>
+                <summary>
+                    <span class="sec-title">Conteúdo</span>
+                    <span class="sec-desc">Nome, cargo, contato e QR</span>
+                    <span class="chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="section-body">
+                    <div class="grid">
+                        <div class="field">
+                            <label for="f-name">Nome completo</label>
+                            <input type="text" id="f-name" />
+                        </div>
+                        <div class="field">
+                            <label for="f-role">Cargo principal</label>
+                            <input type="text" id="f-role" />
+                        </div>
+                        <div class="field">
+                            <label for="f-empresa">Empresa (opcional)</label>
+                            <input type="text" id="f-empresa" />
+                        </div>
+                        <div class="field">
+                            <label for="f-eyebrow">Eyebrow (rótulo mono)</label>
+                            <input type="text" id="f-eyebrow" />
+                        </div>
+                        <div class="field">
+                            <label for="f-specs"
+                                >Especializações (separe por ; )</label
+                            >
+                            <input type="text" id="f-specs" />
+                        </div>
+                        <div class="field">
+                            <label for="f-tagline">Tagline</label>
+                            <input type="text" id="f-tagline" />
+                        </div>
+                        <div class="field">
+                            <label for="f-email">E-mail</label>
+                            <input type="text" id="f-email" inputmode="email" />
+                        </div>
+                        <div class="field">
+                            <label for="f-site">Site (texto exibido)</label>
+                            <input type="text" id="f-site" />
+                        </div>
+                        <div class="field">
+                            <label for="f-qrurl">QR aponta para (URL)</label>
+                            <input type="text" id="f-qrurl" inputmode="url" />
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <!-- MÍDIA -->
+            <details class="section">
+                <summary>
+                    <span class="sec-title">Mídia</span>
+                    <span class="sec-desc">Foto de perfil</span>
+                    <span class="chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="section-body">
+                    <div class="photo-uploader">
+                        <label class="field-label"
+                            >Foto profissional (opcional)</label
+                        >
+                        <div class="photo-drop-zone" id="photo-drop-zone">
+                            <input
+                                type="file"
+                                id="f-photo"
+                                accept="image/*"
+                                tabindex="-1"
+                                aria-label="Selecionar foto de perfil"
+                            />
+                            <div class="photo-icon" aria-hidden="true">
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path
+                                        d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                                    />
+                                    <circle cx="12" cy="13" r="4" />
+                                </svg>
+                            </div>
+                            <img class="photo-thumb" id="photo-thumb" alt="" />
+                            <div class="photo-info">
+                                <span class="photo-name" id="photo-name"
+                                    >Clique ou arraste uma imagem</span
+                                >
+                                <span class="photo-hint"
+                                    >JPG, PNG, WEBP · substitui o
+                                    monograma</span
+                                >
+                            </div>
+                            <button
+                                class="photo-remove"
+                                id="photo-remove"
+                                type="button"
+                                aria-label="Remover foto"
+                            >
+                                <svg
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="2.2"
+                                    stroke-linecap="round"
+                                >
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            </button>
+                        </div>
+                        <span class="field-note"
+                            >Este modelo usa foto/monograma. Logotipo e imagens
+                            extras não fazem parte deste layout.</span
+                        >
+                    </div>
+                </div>
+            </details>
+
+            <!-- LAYOUT -->
+            <details class="section">
+                <summary>
+                    <span class="sec-title">Layout</span>
+                    <span class="sec-desc">Elementos visíveis</span>
+                    <span class="chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="section-body">
+                    <label class="switch" for="f-show-qr">
+                        <input type="checkbox" id="f-show-qr" checked />
+                        <span class="switch-track" aria-hidden="true"></span>
+                        <span class="switch-label">Mostrar QR Code</span>
+                    </label>
+                    <label class="switch" for="f-cursor">
+                        <input type="checkbox" id="f-cursor" checked />
+                        <span class="switch-track" aria-hidden="true"></span>
+                        <span class="switch-label"
+                            >Animação do cursor (apenas no editor)</span
+                        >
+                    </label>
+                </div>
+            </details>
+
+            <!-- EXPORTAÇÃO -->
+            <details class="section" open>
+                <summary>
+                    <span class="sec-title">Exportação</span>
+                    <span class="sec-desc">Formato, resolução e qualidade</span>
+                    <span class="chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="section-body">
+                    <div class="grid">
+                        <div class="field">
+                            <label for="f-format">Formato</label>
+                            <select id="f-format">
+                                <option value="png">PNG (transparente)</option>
+                                <option value="jpeg">JPEG (menor)</option>
+                                <option value="webp">WebP (moderno)</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="f-export-size">Resolução</label>
+                            <select id="f-export-size">
+                                <option value="small">
+                                    Pequeno — 1200×320
+                                </option>
+                                <option value="medium">
+                                    Médio — 2400×640 (recomendado)
+                                </option>
+                                <option value="large">Grande — 3600×960</option>
+                                <option value="auto">
+                                    Automático — pela tela
+                                </option>
+                                <option value="custom">Personalizada…</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid custom-res" id="custom-res" hidden>
+                        <div class="field">
+                            <label for="f-cw">Largura (px)</label>
+                            <input
+                                type="number"
+                                id="f-cw"
+                                min="200"
+                                max="8000"
+                                step="10"
+                                inputmode="numeric"
+                            />
+                        </div>
+                        <div class="field">
+                            <label for="f-ch">Altura (px)</label>
+                            <input
+                                type="number"
+                                id="f-ch"
+                                min="200"
+                                max="8000"
+                                step="10"
+                                inputmode="numeric"
+                            />
+                        </div>
+                        <div class="field field-inline">
+                            <label class="switch" for="f-preserve">
+                                <input
+                                    type="checkbox"
+                                    id="f-preserve"
+                                    checked
+                                />
+                                <span
+                                    class="switch-track"
+                                    aria-hidden="true"
+                                ></span>
+                                <span class="switch-label"
+                                    >Preservar proporção</span
+                                >
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grid quality-row" id="quality-row" hidden>
+                        <div class="field">
+                            <label for="f-quality"
+                                >Qualidade
+                                <span id="quality-val">92%</span></label
+                            >
+                            <input
+                                type="range"
+                                id="f-quality"
+                                min="0.3"
+                                max="1"
+                                step="0.01"
+                                value="0.92"
+                            />
+                        </div>
+                    </div>
+
+                    <p
+                        class="field-note"
+                        id="export-dim-hint"
+                        aria-live="polite"
+                    ></p>
+                    <p
+                        class="validation"
+                        id="export-validation"
+                        role="status"
+                        aria-live="polite"
+                    ></p>
+
+                    <div class="actions">
+                        <button class="action-btn primary" id="btn-png">
+                            Exportar imagem
+                        </button>
+                        <button class="action-btn ghost" id="btn-reset">
+                            Restaurar padrão
                         </button>
                     </div>
                 </div>
-            </div>
-
-            <h2 style="margin-top: 28px">// cores</h2>
-            <div class="grid">
-                <div class="field">
-                    <label for="f-void">Fundo</label>
-                    <input type="color" id="f-void" />
-                </div>
-                <div class="field">
-                    <label for="f-text">Texto primário</label>
-                    <input type="color" id="f-text" />
-                </div>
-                <div class="field">
-                    <label for="f-text2">Texto secundário</label>
-                    <input type="color" id="f-text2" />
-                </div>
-                <div class="field">
-                    <label for="f-accent">Acento principal</label>
-                    <input type="color" id="f-accent" />
-                </div>
-                <div class="field">
-                    <label for="f-border">Bordas</label>
-                    <input type="color" id="f-border" />
-                </div>
-            </div>
-
-            <div class="actions">
-                <button class="action-btn primary" id="btn-png">
-                    Exportar PNG (2×)
-                </button>
-                <button class="action-btn ghost" id="btn-reset">
-                    Restaurar padrão
-                </button>
-            </div>
+            </details>
 
             <div class="hint">
-                <b>Como usar:</b> edite os campos e veja o banner atualizar em
-                tempo real. O QR é gerado localmente (funciona offline).
-                <code>Exportar PNG (2×)</code> baixa a imagem em 2400×640 px
-                para uso como assinatura. Os tokens visuais ficam no bloco
-                <code>:root</code> de <code>src/css/banner.css</code> e as
-                configurações de conteúdo em <code>src/js/config.js</code>.
-                <br /><br />
-                Como o banner é uma imagem, cole-o no e-mail
-                <b>com uma linha de texto real contendo os links abaixo</b>
+                <b>Dica:</b> o arquivo exportado reflete exatamente o que está
+                na tela (tema, cores, textos, foto e ícones). A resolução afeta
+                só o arquivo, não o editor. Como o banner é uma imagem, cole-o
+                no e-mail <b>com uma linha de texto real com seus links</b>
                 (links dentro de imagens não são clicáveis em clientes de
                 e-mail).
             </div>
         </div>
-        <!-- /.panel -->
 
         <!--
-        Scripts — ordem de carregamento obrigatória:
-        1. qrcode.lib.js  — define a função global `qrcode`
-        2. config.js      — define o objeto global `BANNER_CONFIG`
-        3. banner.js      — consome ambos e inicializa a aplicação
+        Ordem obrigatória:
+        qrcode.lib.js -> config.js -> export.js -> banner.js
         -->
         <script src="src/js/qrcode.lib.js"></script>
         <script src="src/js/config.js"></script>
+        <script src="src/js/export.js"></script>
         <script src="src/js/banner.js"></script>
     </body>
 </html>
