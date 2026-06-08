@@ -111,12 +111,8 @@
             </div>
         </div>
 
-        <!-- ── Painel de edição ── -->
-        <div
-            class="panel"
-            role="region"
-            aria-label="Painel de edição do banner"
-        >
+        <!-- ── Painel ── -->
+        <div class="panel" role="region" aria-label="Painel de edição do banner">
             <!-- APARÊNCIA -->
             <details class="section" open>
                 <summary>
@@ -126,29 +122,44 @@
                 </summary>
                 <div class="section-body">
                     <div class="field">
-                        <span class="field-label" id="lbl-theme">Tema</span>
+                        <span class="field-label" id="lbl-mode"
+                            >Tema (banner + interface)</span
+                        >
                         <div
                             class="segmented"
                             role="group"
-                            aria-labelledby="lbl-theme"
+                            aria-labelledby="lbl-mode"
                         >
                             <button
                                 type="button"
-                                id="theme-light"
+                                id="mode-light"
                                 class="seg-btn"
-                                aria-pressed="true"
+                                aria-pressed="false"
                             >
                                 Claro
                             </button>
                             <button
                                 type="button"
-                                id="theme-dark"
+                                id="mode-dark"
                                 class="seg-btn"
-                                aria-pressed="false"
+                                aria-pressed="true"
                             >
                                 Escuro
                             </button>
+                            <button
+                                type="button"
+                                id="mode-auto"
+                                class="seg-btn"
+                                aria-pressed="false"
+                            >
+                                Auto
+                            </button>
                         </div>
+                        <span
+                            class="field-note"
+                            id="mode-note"
+                            aria-live="polite"
+                        ></span>
                     </div>
 
                     <div class="field">
@@ -217,27 +228,166 @@
                         </div>
                     </div>
 
-                    <div class="grid">
-                        <div class="field">
-                            <label for="f-void">Plano de fundo</label>
-                            <input type="color" id="f-void" />
+                    <div class="field">
+                        <span class="field-label"
+                            >Cores — variante do tema atual</span
+                        >
+                        <div class="color-grid">
+                            <!-- background -->
+                            <div class="color-row">
+                                <label for="f-hex-background"
+                                    >Plano de fundo</label
+                                >
+                                <div class="color-control">
+                                    <input
+                                        type="color"
+                                        id="f-col-background"
+                                        aria-label="Seletor: Plano de fundo"
+                                    />
+                                    <input
+                                        type="text"
+                                        id="f-hex-background"
+                                        class="hex-input"
+                                        spellcheck="false"
+                                        maxlength="7"
+                                        placeholder="#000000"
+                                        aria-describedby="err-background"
+                                    />
+                                </div>
+                                <span
+                                    class="hex-error"
+                                    id="err-background"
+                                    role="alert"
+                                ></span>
+                            </div>
+                            <!-- textPrimary -->
+                            <div class="color-row">
+                                <label for="f-hex-textPrimary"
+                                    >Texto primário</label
+                                >
+                                <div class="color-control">
+                                    <input
+                                        type="color"
+                                        id="f-col-textPrimary"
+                                        aria-label="Seletor: Texto primário"
+                                    />
+                                    <input
+                                        type="text"
+                                        id="f-hex-textPrimary"
+                                        class="hex-input"
+                                        spellcheck="false"
+                                        maxlength="7"
+                                        placeholder="#000000"
+                                        aria-describedby="err-textPrimary"
+                                    />
+                                </div>
+                                <span
+                                    class="hex-error"
+                                    id="err-textPrimary"
+                                    role="alert"
+                                ></span>
+                            </div>
+                            <!-- textSecondary -->
+                            <div class="color-row">
+                                <label for="f-hex-textSecondary"
+                                    >Texto secundário</label
+                                >
+                                <div class="color-control">
+                                    <input
+                                        type="color"
+                                        id="f-col-textSecondary"
+                                        aria-label="Seletor: Texto secundário"
+                                    />
+                                    <input
+                                        type="text"
+                                        id="f-hex-textSecondary"
+                                        class="hex-input"
+                                        spellcheck="false"
+                                        maxlength="7"
+                                        placeholder="#000000"
+                                        aria-describedby="err-textSecondary"
+                                    />
+                                </div>
+                                <span
+                                    class="hex-error"
+                                    id="err-textSecondary"
+                                    role="alert"
+                                ></span>
+                            </div>
+                            <!-- accent -->
+                            <div class="color-row">
+                                <label for="f-hex-accent">Acento</label>
+                                <div class="color-control">
+                                    <input
+                                        type="color"
+                                        id="f-col-accent"
+                                        aria-label="Seletor: Acento"
+                                    />
+                                    <input
+                                        type="text"
+                                        id="f-hex-accent"
+                                        class="hex-input"
+                                        spellcheck="false"
+                                        maxlength="7"
+                                        placeholder="#000000"
+                                        aria-describedby="err-accent"
+                                    />
+                                </div>
+                                <span
+                                    class="hex-error"
+                                    id="err-accent"
+                                    role="alert"
+                                ></span>
+                            </div>
+                            <!-- border -->
+                            <div class="color-row">
+                                <label for="f-hex-border">Bordas</label>
+                                <div class="color-control">
+                                    <input
+                                        type="color"
+                                        id="f-col-border"
+                                        aria-label="Seletor: Bordas"
+                                    />
+                                    <input
+                                        type="text"
+                                        id="f-hex-border"
+                                        class="hex-input"
+                                        spellcheck="false"
+                                        maxlength="7"
+                                        placeholder="#000000"
+                                        aria-describedby="err-border"
+                                    />
+                                </div>
+                                <span
+                                    class="hex-error"
+                                    id="err-border"
+                                    role="alert"
+                                ></span>
+                            </div>
                         </div>
-                        <div class="field">
-                            <label for="f-text">Texto primário</label>
-                            <input type="color" id="f-text" />
-                        </div>
-                        <div class="field">
-                            <label for="f-text2">Texto secundário</label>
-                            <input type="color" id="f-text2" />
-                        </div>
-                        <div class="field">
-                            <label for="f-accent">Acento</label>
-                            <input type="color" id="f-accent" />
-                        </div>
-                        <div class="field">
-                            <label for="f-border">Bordas</label>
-                            <input type="color" id="f-border" />
-                        </div>
+                    </div>
+
+                    <div class="config-io">
+                        <button
+                            class="action-btn ghost sm"
+                            id="btn-export-cfg"
+                            type="button"
+                        >
+                            Exportar configuração
+                        </button>
+                        <button
+                            class="action-btn ghost sm"
+                            id="btn-import-cfg"
+                            type="button"
+                        >
+                            Importar configuração
+                        </button>
+                        <input
+                            type="file"
+                            id="f-import-cfg"
+                            accept="application/json,.json"
+                            hidden
+                        />
                     </div>
                 </div>
             </details>
@@ -334,8 +484,7 @@
                                     >Clique ou arraste uma imagem</span
                                 >
                                 <span class="photo-hint"
-                                    >JPG, PNG, WEBP · substitui o
-                                    monograma</span
+                                    >JPG, PNG, WEBP · substitui o monograma</span
                                 >
                             </div>
                             <button
@@ -356,10 +505,6 @@
                                 </svg>
                             </button>
                         </div>
-                        <span class="field-note"
-                            >Este modelo usa foto/monograma. Logotipo e imagens
-                            extras não fazem parte deste layout.</span
-                        >
                     </div>
                 </div>
             </details>
@@ -407,9 +552,7 @@
                         <div class="field">
                             <label for="f-export-size">Resolução</label>
                             <select id="f-export-size">
-                                <option value="small">
-                                    Pequeno — 1200×320
-                                </option>
+                                <option value="small">Pequeno — 1200×320</option>
                                 <option value="medium">
                                     Médio — 2400×640 (recomendado)
                                 </option>
@@ -447,11 +590,7 @@
                         </div>
                         <div class="field field-inline">
                             <label class="switch" for="f-preserve">
-                                <input
-                                    type="checkbox"
-                                    id="f-preserve"
-                                    checked
-                                />
+                                <input type="checkbox" id="f-preserve" checked />
                                 <span
                                     class="switch-track"
                                     aria-hidden="true"
@@ -466,8 +605,7 @@
                     <div class="grid quality-row" id="quality-row" hidden>
                         <div class="field">
                             <label for="f-quality"
-                                >Qualidade
-                                <span id="quality-val">92%</span></label
+                                >Qualidade <span id="quality-val">92%</span></label
                             >
                             <input
                                 type="range"
@@ -505,20 +643,18 @@
 
             <div class="hint">
                 <b>Dica:</b> o arquivo exportado reflete exatamente o que está
-                na tela (tema, cores, textos, foto e ícones). A resolução afeta
-                só o arquivo, não o editor. Como o banner é uma imagem, cole-o
-                no e-mail <b>com uma linha de texto real com seus links</b>
-                (links dentro de imagens não são clicáveis em clientes de
-                e-mail).
+                na tela (tema, cores, textos, foto e ícones). O tema controla
+                banner e interface juntos; a resolução afeta só o arquivo.
             </div>
         </div>
 
         <!--
         Ordem obrigatória:
-        qrcode.lib.js -> config.js -> export.js -> banner.js
+        qrcode.lib.js -> config.js -> theme.js -> export.js -> banner.js
         -->
         <script src="src/js/qrcode.lib.js"></script>
         <script src="src/js/config.js"></script>
+        <script src="src/js/theme.js"></script>
         <script src="src/js/export.js"></script>
         <script src="src/js/banner.js"></script>
     </body>
