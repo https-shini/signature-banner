@@ -1,32 +1,37 @@
 # Signature Banner
 
-Banner de assinatura profissional em HTML puro — editável em tempo real, exportável como PNG de alta resolução, totalmente offline e sem dependências externas.
-
-![Banner Preview](docs/preview.png)
+Banner de assinatura profissional em HTML/CSS/JS puro — editável em tempo
+real, com tema claro/escuro, exportação em PNG/JPEG/WebP de alta resolução,
+100% offline e sem dependências externas (nem build, nem CDN).
 
 ---
 
 ## Funcionalidades
 
-- **Preview ao vivo** — qualquer alteração no painel reflete instantaneamente no banner
-- **QR Code dinâmico** — gerado localmente via lib embutida (sem CDN, funciona offline)
-- **Upload de foto** — substitui o monograma por foto profissional
-- **Export PNG 2×** — gera imagem em 2400×640 px pronta para assinatura de e-mail
-- **Painel de cores** — personalização de paleta em tempo real via color pickers
-- **Zero dependências** — sem frameworks, sem build step, sem servidor
+- **Preview ao vivo** — qualquer alteração reflete instantaneamente no banner.
+- **Tema claro/escuro/auto** — o tema do banner e da interface mudam juntos;
+  `auto` segue `prefers-color-scheme`.
+- **Cores semânticas** — `background`, `textPrimary`, `textSecondary`,
+  `accent`, `border`, cada uma com variante clara e escura, editáveis por
+  seletor de cor ou hex validado.
+- **Paletas de acento** — Crimson, Indigo, Esmeralda, Âmbar, Azul, Violeta.
+- **QR Code dinâmico** — gerado localmente (sem CDN), com contraste garantido
+  em qualquer tema.
+- **Foto de perfil** — substitui o monograma (drag & drop).
+- **Exportação avançada** — formatos PNG/JPEG/WebP, resoluções predefinidas
+  (1×/2×/3×/auto) e **resolução personalizada** em pixels, com preservação de
+  proporção, qualidade e validação de limites.
+- **Importar/Exportar configuração** — salva e restaura todo o estado em JSON.
+- **Zero dependências** — sem framework, sem bundler, sem servidor.
 
 ---
 
 ## Início rápido
 
 ```bash
-# Clone o repositório
 git clone https://github.com/seu-usuario/signature-banner.git
 cd signature-banner
-
-# Abra no navegador (qualquer método funciona)
-open index.html
-# ou: python3 -m http.server e acesse http://localhost:8000
+open index.html        # ou: python3 -m http.server  →  http://localhost:8000
 ```
 
 Não é necessário instalar nada.
@@ -35,59 +40,62 @@ Não é necessário instalar nada.
 
 ## Personalização
 
-### Método 1 — Painel visual (recomendado para uso pontual)
+### Método 1 — Painel visual
 
-Abra `index.html` no navegador, edite os campos do painel e clique em **Exportar PNG (2×)**.
+Abra `index.html`, edite as seções (Aparência, Conteúdo, Mídia, Layout,
+Exportação), escolha formato/resolução e clique em **Exportar imagem**. Use
+**Exportar/Importar configuração** para versionar o estado em JSON.
 
-### Método 2 — Arquivo de configuração (recomendado para manter no repositório)
+### Método 2 — `src/js/config.js`
 
-Edite **`src/js/config.js`** para definir seus valores padrão. Este é o único arquivo que você precisa alterar:
+`config.js` é o único arquivo que você precisa editar. Estrutura resumida:
 
 ```js
 const BANNER_CONFIG = {
   defaults: {
-    eyebrow:  'SOFTWARE ENGINEER',
-    name:     'Seu Nome **Sobrenome**',  // **negrito** no sobrenome
-    role:     'Desenvolvedor de Software',
-    specs:    'Frontend; React; TypeScript', // separados por ;
-    tagline:  'Sua tagline aqui<br>segunda linha opcional.',
-    email:    'seu@email.com',
-    site:     'seusite.com.br',
-    cta1Text: 'Ver Portfólio',
-    cta1Link: 'https://seusite.com.br',
-    cta2Text: 'Entrar em Contato',
-    cta2Link: 'https://linkedin.com/in/voce',
-    qrLabel:  'MEUS LINKS',
-    qrUrl:    'https://linktr.ee/voce',
+    eyebrow: "Software Developer",
+    name:    "**Guilherme de Souza Cruz**", // **negrito** parcial
+    role:    "Desenvolvedor de Software",
+    empresa: "",                              // opcional (ao lado do cargo)
+    specs:   "Full Stack; AI & Automation",   // separados por ;
+    tagline: "Linha 1<br>Linha 2",            // <br> quebra linha
+    email:   "voce@email.com",
+    site:    "seusite.com.br",
+    qrUrl:   "https://links.seusite.com.br",
   },
 
-  colors: {
-    background:     '#ffffff',
-    textPrimary:    '#0f172a',
-    textSecondary:  '#475569',
-    accent:         '#e11d48',   // cor principal de marca
-    border:         '#e6e8ee',
+  theme: {
+    mode: "dark",          // "light" | "dark" | "auto"
+    palette: "crimson",    // chave de palettes
+    palettes: { crimson: { accent: "#e11d48", signal: "#4f46e5" }, /* ... */ },
+    tokens: {              // cada cor: variante light + dark
+      background:    { light: "#ffffff", dark: "#0b1220" },
+      textPrimary:   { light: "#0f172a", dark: "#f1f5f9" },
+      textSecondary: { light: "#475569", dark: "#94a3b8" },
+      accent:        { light: "#e11d48", dark: "#e11d48" },
+      border:        { light: "#e6e8ee", dark: "#22304a" },
+    },
   },
 
   export: {
-    scale:    2,
-    filename: 'banner-assinatura.png',
+    format: "png",         // "png" | "jpeg" | "webp"
+    quality: 0.92,         // 0..1 (JPEG/WebP)
+    defaultSize: "medium", // small | medium | large | auto | custom
+    custom: { width: 2400, height: 640, preserveAspect: true },
+    filename: "banner-assinatura",
   },
 
-  brand: {
-    signal: '#4f46e5',  // cor do botão secundário (CTA 2)
-    // ...demais tokens
-  },
+  brand: { /* fontes e dimensões lógicas do banner */ },
 };
 ```
 
-### Sintaxe especial nos campos de texto
+### Sintaxe especial
 
 | Campo | Sintaxe | Resultado |
 |-------|---------|-----------|
-| `name` | `Primeiro **Último**` | "Último" em negrito (Fraunces 500) |
-| `tagline` | `Linha 1<br>Linha 2` | Quebra de linha no banner |
-| `specs` | `React; Node.js; SQL` | Itens separados por bullets |
+| `name` | `Primeiro **Último**` | "Último" em negrito |
+| `tagline` | `Linha 1<br>Linha 2` | Quebra de linha |
+| `specs` | `React; Node; SQL` | Itens com bullets |
 
 ---
 
@@ -95,59 +103,47 @@ const BANNER_CONFIG = {
 
 ```
 signature-banner/
-├── index.html              ← Ponto de entrada (não editar)
+├── index.html              ← ponto de entrada (não editar)
 ├── src/
-│   ├── css/
-│   │   └── banner.css      ← Estilos (design tokens + layout + painel)
+│   ├── css/banner.css       ← tokens de tema (UI) + banner + painel
 │   └── js/
-│       ├── config.js       ← ★ EDITE AQUI — textos, cores, links, export
-│       ├── qrcode.lib.js   ← QR Code Generator (Kazuhiko Arase, MIT)
-│       └── banner.js       ← Lógica principal (sync, QR, export PNG)
+│       ├── config.js        ← ★ EDITE AQUI — conteúdo, tema, exportação
+│       ├── qrcode.lib.js    ← QR Code (Kazuhiko Arase, MIT) — não editar
+│       ├── theme.js         ← BannerTheme: gestão central de temas
+│       ├── export.js        ← BannerExporter: exportação fiel ao DOM
+│       └── banner.js        ← editor (UI, sync, listeners, bootstrap)
 └── docs/
-    ├── CUSTOMIZATION.md    ← Guia detalhado de personalização
-    └── DEVELOPMENT.md      ← Guia de contribuição e desenvolvimento
+    ├── CUSTOMIZATION.md
+    └── DEVELOPMENT.md
 ```
 
 ### Ordem de carregamento dos scripts
 
 ```
-qrcode.lib.js  →  config.js  →  banner.js
-     ↓                ↓              ↓
-define qrcode()  define BANNER_CONFIG  bootstrap
+qrcode.lib.js → config.js → theme.js → export.js → banner.js
 ```
 
-`banner.js` depende de `qrcode` e `BANNER_CONFIG` estarem no escopo global. A ordem declarada no `index.html` garante isso sem bundler.
+`theme.js`, `export.js` e `banner.js` consomem os globais `qrcode` e
+`BANNER_CONFIG`. A ordem no `index.html` garante isso sem bundler.
 
 ---
 
-## Personalização avançada de cores
+## Exportação — como funciona
 
-Além do painel, os tokens de cor completos ficam no bloco `:root` de `src/css/banner.css`. A cor de acento secundário (`--signal`, usada no CTA 2) não está exposta no painel mas pode ser alterada em `config.js`:
+`export.js` **não recria o layout**: ele mede o DOM vivo
+(`getBoundingClientRect`) e lê os estilos calculados (`getComputedStyle`) de
+cada elemento, pintando num `<canvas>` off-screen nas mesmas posições, fontes
+e cores exibidas. O que está na tela é o que sai no arquivo.
 
-```js
-brand: {
-  signal: '#059669',  // troca indigo por esmeralda
-}
-```
+- **Resoluções**: `small` 1× (1200×320), `medium` 2× (2400×640), `large` 3×
+  (3600×960), `auto` (densidade da tela) e `custom` (px arbitrários).
+- **Proporção**: com "preservar proporção" a escala é uniforme (sem distorção).
+- **Formatos**: PNG (alfa), JPEG (fundo opaco), WebP. Qualidade aplica-se aos
+  formatos com perda.
+- **Limites**: 200–8000 px por lado e guarda de ~40 MP, com validação.
 
----
-
-## Export PNG — detalhes técnicos
-
-O botão **Exportar PNG (2×)** renderiza o banner num `<canvas>` off-screen de 2400×640 px, reconstruindo todos os elementos via Canvas 2D API:
-
-- Gradientes de fundo e glow de marca
-- Avatar circular com clip ou monograma com ponto de acento
-- Nome com bold parcial (Fraunces 400/500)
-- Especializações com bullets
-- Tagline com quebra de linha
-- Botões primário e secundário desenhados com `roundRect`
-- Ícones (seta, balão, envelope, globo) desenhados via primitives
-- QR Code copiado do `<canvas>` DOM
-
-A escala padrão é `2` (configurável em `config.export.scale`). Escala `3` gera 3600×960 px.
-
-> **Limitação de e-mail**: links dentro de imagens não são clicáveis na maioria dos clientes. Adicione os links como texto real abaixo da imagem na assinatura.
+> **E-mail**: links dentro de imagens não são clicáveis na maioria dos
+> clientes. Cole o banner com uma linha de texto real contendo seus links.
 
 ---
 
@@ -155,17 +151,17 @@ A escala padrão é `2` (configurável em `config.export.scale`). Escala `3` ger
 
 | Navegador | Suporte |
 |-----------|---------|
-| Chrome 90+ | ✅ Completo |
-| Edge 90+   | ✅ Completo |
-| Firefox 90+ | ✅ Completo |
-| Safari 15+ | ✅ Completo |
+| Chrome / Edge 90+ | ✅ |
+| Firefox 90+ | ✅ |
+| Safari 15+ | ✅ |
 
-Requer suporte a: `Canvas 2D API`, `CSS custom properties`, `color-mix()`, `FileReader API`.
+Requer: `Canvas 2D API`, `CSS custom properties`, `color-mix()`,
+`FileReader`, `prefers-color-scheme`. O `letter-spacing` no canvas tem
+fallback manual para navegadores que não o suportam.
 
 ---
 
 ## Licença
 
-O código do projeto está sob licença [MIT](LICENSE).
-
-A biblioteca de QR Code embutida (`src/js/qrcode.lib.js`) é de autoria de **Kazuhiko Arase** e está também sob licença MIT.
+Código sob [MIT](LICENSE). O QR Code embutido (`src/js/qrcode.lib.js`) é de
+**Kazuhiko Arase**, também MIT.
