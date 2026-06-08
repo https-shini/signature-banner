@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Banner de Assinatura</title>
+
+  <!--
+    Guia rápido de personalização
+    ──────────────────────────────────────────────────────────────────────────────
+    Para customizar o banner, edite APENAS: src/js/config.js
+    Não é necessário alterar este arquivo nem nenhum outro.
+
+    Estrutura do projeto:
+      index.html              ← você está aqui (ponto de entrada)
+      src/
+        css/
+          banner.css          ← estilos (design tokens + layout + painel)
+        js/
+          config.js           ← ★ EDITE AQUI: textos, cores, links, export
+          qrcode.lib.js       ← lib de QR Code (Kazuhiko Arase, MIT) — não edite
+          banner.js           ← lógica principal — não edite
+      docs/
+        CUSTOMIZATION.md      ← guia de personalização
+        DEVELOPMENT.md        ← guia de desenvolvimento
+    ──────────────────────────────────────────────────────────────────────────────
+  -->
+
+  <link rel="stylesheet" href="src/css/banner.css">
+</head>
+<body>
+
+  <!-- ── Cabeçalho da página ── -->
+  <div>
+    <div class="page-title">Banner de Assinatura — <b>Guilherme Cruz</b></div>
+    <div class="page-sub">// modelo editável · html · css · js · 100% offline</div>
+  </div>
+
+  <!-- ── Preview do banner ── -->
+  <div class="stage">
+    <div id="banner">
+
+      <!-- Rail de acento na borda esquerda -->
+      <div class="rail"></div>
+
+      <!-- Coluna 1: Avatar / Monograma -->
+      <div class="avatar-zone">
+        <div class="avatar" id="avatar">
+          <img id="avatarImg" alt="Foto de perfil">
+          <span class="monogram" id="monogram">GC<span class="dot">.</span></span>
+        </div>
+      </div>
+
+      <!-- Coluna 2: Conteúdo principal -->
+      <div class="content">
+
+        <div class="eyebrow">
+          <span class="slash">//</span>
+          <span id="t-eyebrow">SOFTWARE ENGINEER</span>
+          <span class="cursor" aria-hidden="true"></span>
+        </div>
+
+        <div class="name" id="t-name">Guilherme de Souza <b>Cruz</b></div>
+
+        <div class="role-primary" id="t-role">Desenvolvedor de Software</div>
+
+        <div class="roles" id="t-specs">
+          <span class="role alt">Full Stack Developer</span>
+          <span class="sep">&#9679;</span>
+          <span class="role alt">AI &amp; Automation</span>
+          <span class="sep">&#9679;</span>
+          <span class="role alt">Freelancer</span>
+        </div>
+
+        <div class="tagline" id="t-tagline">
+          Projetando e desenvolvendo soluções digitais<br>
+          que transformam desafios em oportunidades.
+        </div>
+
+        <div class="cta-row">
+          <a class="btn btn-primary" id="cta1" href="#" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6"/>
+            </svg>
+            <span id="t-cta1">Conheca Meu Trabalho</span>
+          </a>
+          <a class="btn btn-secondary" id="cta2" href="#" target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            <span id="t-cta2">Vamos Conversar</span>
+          </a>
+        </div>
+
+        <div class="contact">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="2" y="4" width="20" height="16" rx="2"/>
+            <path d="m2 7 10 6 10-6"/>
+          </svg>
+          <a id="c-email" href="#"></a>
+          <span class="arrow">·</span>
+          <svg class="site-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M2 12h20"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+          <a id="c-site" href="#" target="_blank" rel="noopener noreferrer"></a>
+        </div>
+
+      </div><!-- /.content -->
+
+      <!-- Coluna 3: QR Code -->
+      <div class="qr-zone">
+        <div class="qr-card">
+          <canvas id="qrCanvas" width="232" height="232"
+                  aria-label="QR Code de contato"></canvas>
+        </div>
+        <div class="qr-label">
+          <span class="dot" aria-hidden="true"></span>
+          <span id="t-qrlabel">CENTRAL DE CONTATOS</span>
+        </div>
+      </div>
+
+    </div><!-- /#banner -->
+  </div><!-- /.stage -->
+
+  <!-- ── Painel de edição ── -->
+  <div class="panel" role="form" aria-label="Painel de edição do banner">
+
+    <h2>// editar conteúdo</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="f-eyebrow">Eyebrow (rótulo mono)</label>
+        <input type="text" id="f-eyebrow">
+      </div>
+      <div class="field">
+        <label for="f-name">Nome (use **negrito** no sobrenome)</label>
+        <input type="text" id="f-name">
+      </div>
+      <div class="field">
+        <label for="f-role">Cargo principal</label>
+        <input type="text" id="f-role">
+      </div>
+      <div class="field">
+        <label for="f-specs">Especializações (separe por ; )</label>
+        <input type="text" id="f-specs">
+      </div>
+      <div class="field">
+        <label for="f-tagline">Tagline (use &lt;br&gt; para quebrar linha)</label>
+        <input type="text" id="f-tagline">
+      </div>
+      <div class="field">
+        <label for="f-email">E-mail</label>
+        <input type="text" id="f-email">
+      </div>
+      <div class="field">
+        <label for="f-site">Site (texto exibido)</label>
+        <input type="text" id="f-site">
+      </div>
+      <div class="field">
+        <label for="f-cta1">CTA 1 — texto</label>
+        <input type="text" id="f-cta1">
+      </div>
+      <div class="field">
+        <label for="f-cta1link">CTA 1 — link</label>
+        <input type="text" id="f-cta1link">
+      </div>
+      <div class="field">
+        <label for="f-cta2">CTA 2 — texto</label>
+        <input type="text" id="f-cta2">
+      </div>
+      <div class="field">
+        <label for="f-cta2link">CTA 2 — link</label>
+        <input type="text" id="f-cta2link">
+      </div>
+      <div class="field">
+        <label for="f-qrlabel">Label do QR</label>
+        <input type="text" id="f-qrlabel">
+      </div>
+      <div class="field">
+        <label for="f-qrurl">QR aponta para (URL)</label>
+        <input type="text" id="f-qrurl">
+      </div>
+      <div class="field">
+        <label for="f-photo">Foto profissional (opcional)</label>
+        <input type="file" id="f-photo" accept="image/*">
+      </div>
+    </div>
+
+    <h2 style="margin-top: 28px;">// cores</h2>
+    <div class="grid">
+      <div class="field">
+        <label for="f-void">Fundo</label>
+        <input type="color" id="f-void">
+      </div>
+      <div class="field">
+        <label for="f-text">Texto primário</label>
+        <input type="color" id="f-text">
+      </div>
+      <div class="field">
+        <label for="f-text2">Texto secundário</label>
+        <input type="color" id="f-text2">
+      </div>
+      <div class="field">
+        <label for="f-accent">Acento principal</label>
+        <input type="color" id="f-accent">
+      </div>
+      <div class="field">
+        <label for="f-border">Bordas</label>
+        <input type="color" id="f-border">
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="action-btn primary" id="btn-png">
+        Exportar PNG (2×)
+      </button>
+      <button class="action-btn ghost" id="btn-reset">
+        Restaurar padrão
+      </button>
+    </div>
+
+    <div class="hint">
+      <b>Como usar:</b> edite os campos e veja o banner atualizar em tempo real.
+      O QR é gerado localmente (funciona offline).
+      <code>Exportar PNG (2×)</code> baixa a imagem em 2400×640 px para uso como assinatura.
+      Os tokens visuais ficam no bloco <code>:root</code> de <code>src/css/banner.css</code>
+      e as configurações de conteúdo em <code>src/js/config.js</code>.
+      <br><br>
+      Como o banner é uma imagem, cole-o no e-mail
+      <b>com uma linha de texto real contendo os links abaixo</b>
+      (links dentro de imagens não são clicáveis em clientes de e-mail).
+    </div>
+
+  </div><!-- /.panel -->
+
+  <!--
+    Scripts — ordem de carregamento obrigatória:
+      1. qrcode.lib.js  — define a função global `qrcode`
+      2. config.js      — define o objeto global `BANNER_CONFIG`
+      3. banner.js      — consome ambos e inicializa a aplicação
+  -->
+  <script src="src/js/qrcode.lib.js"></script>
+  <script src="src/js/config.js"></script>
+  <script src="src/js/banner.js"></script>
+
+</body>
+</html>
