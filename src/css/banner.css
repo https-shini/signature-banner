@@ -141,6 +141,12 @@ html {
 body.light-mode {
     color-scheme: light;
 }
+/* Garante que o atributo [hidden] vença regras de display de classe
+   (ex.: .grid{display:grid}). Sem isto, #custom-res e #quality-row
+   ficariam sempre visíveis mesmo com hidden=true. */
+[hidden] {
+    display: none !important;
+}
 :focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
