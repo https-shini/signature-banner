@@ -1,65 +1,36 @@
 /**
  * @file banner.js
- * @description Lógica do editor do Banner de Assinatura (v2).
+ * @description Lógica do editor do Banner de Assinatura (v3).
  *
- * Responsabilidades:
- *  - Sincronizar formulário -> banner (texto, cores, tema, paleta, layout)
- *  - Tema claro/escuro e paletas de acento
- *  - QR Code local com contraste garantido (drawQR)
- *  - Upload de foto (drag & drop)
- *  - Restaurar padrão (resetToDefaults) — restaura TODOS os estados
- *  - Exportação delegada ao módulo BannerExporter (export.js)
+ * Cores e tema são delegados ao módulo BannerTheme (theme.js), que é a
+ * fonte única de verdade. Este arquivo cuida da UI: conteúdo, controles
+ * de tema/cores/paleta, layout, exportação e import/export de config.
  *
  * Ordem de scripts (index.html):
- *  qrcode.lib.js -> config.js -> export.js -> banner.js
- *
- * Tudo roda offline, sem frameworks.
+ *  qrcode.lib.js -> config.js -> theme.js -> export.js -> banner.js
  */
 
 "use strict";
 
 const $ = (id) => document.getElementById(id);
 
-/* ─────────────────────────────────────────
-   PALETAS E TEMAS
-   ───────────────────────────────────────── */
-const PALETTES = {
-    crimson: { accent: "#e11d48", signal: "#4f46e5", label: "Crimson" },
-    indigo: { accent: "#4f46e5", signal: "#e11d48", label: "Indigo" },
-    emerald: { accent: "#059669", signal: "#0ea5e9", label: "Esmeralda" },
-    amber: { accent: "#d97706", signal: "#4f46e5", label: "Âmbar" },
-    sky: { accent: "#0284c7", signal: "#7c3aed", label: "Azul" },
-    violet: { accent: "#7c3aed", signal: "#db2777", label: "Violeta" },
-};
-
-const THEMES = {
-    light: {
-        background: "#ffffff",
-        textPrimary: "#0f172a",
-        textSecondary: "#475569",
-        border: "#e6e8ee",
-    },
-    dark: {
-        background: "#0b1220",
-        textPrimary: "#f1f5f9",
-        textSecondary: "#94a3b8",
-        border: "#22304a",
-    },
-};
-
-let currentTheme = "light";
-let currentPalette = "crimson";
+/* Tokens semânticos editáveis na seção Cores */
+const TOKEN_FIELDS = [
+    { name: "background", label: "Plano de fundo" },
+    { name: "textPrimary", label: "Texto primário" },
+    { name: "textSecondary", label: "Texto secundário" },
+    { name: "accent", label: "Acento" },
+    { name: "border", label: "Bordas" },
+];
 
 /* ─────────────────────────────────────────
-   INICIALIZAÇÃO — popula TODOS os controles a partir de BANNER_CONFIG
+   INICIALIZAÇÃO (conteúdo, layout, exportação)
+   O tema é tratado por BannerTheme + refreshThemeUI().
    ───────────────────────────────────────── */
 function initFromConfig() {
     const d = BANNER_CONFIG.defaults;
-    const c = BANNER_CONFIG.colors;
-    const ap = BANNER_CONFIG.appearance || {};
     const ex = BANNER_CONFIG.export || {};
 
-    // Conteúdo
     $("f-eyebrow").value = d.eyebrow;
     $("f-name").value = d.name;
     $("f-role").value = d.role;
@@ -70,26 +41,9 @@ function initFromConfig() {
     $("f-site").value = d.site;
     $("f-qrurl").value = d.qrUrl;
 
-    // Cores base
-    $("f-void").value = c.background;
-    $("f-text").value = c.textPrimary;
-    $("f-text2").value = c.textSecondary;
-    $("f-accent").value = c.accent;
-    $("f-border").value = c.border;
-
-    // Tema e paleta
-    currentTheme = ap.theme === "dark" ? "dark" : "light";
-    currentPalette = PALETTES[ap.accentPalette] ? ap.accentPalette : "crimson";
-    if (currentTheme === "dark") applyThemeColors("dark");
-    applyPaletteSignal(currentPalette);
-    reflectThemeButtons();
-    reflectPaletteSwatches();
-
-    // Layout
     if ($("f-show-qr")) $("f-show-qr").checked = true;
     if ($("f-cursor")) $("f-cursor").checked = true;
 
-    // Exportação
     if ($("f-format")) $("f-format").value = ex.format || "png";
     if ($("f-export-size"))
         $("f-export-size").value = ex.defaultSize || "medium";
@@ -103,16 +57,14 @@ function initFromConfig() {
 }
 
 /* ─────────────────────────────────────────
-   PARSERS
+   PARSERS / TEXTO
    ───────────────────────────────────────── */
 function escapeHTML(s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-
 function parseBold(str) {
     return escapeHTML(str).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>");
 }
-
 function renderSpecs(val) {
     const items = val
         .split(";")
@@ -121,22 +73,20 @@ function renderSpecs(val) {
     return items
         .map((item, i) => {
             const sep =
-                i < items.length - 1 ? '<span class="sep">&#9679;</span>' : "";
+                i < items.length - 1
+                    ? '<span class="sep">&#9679;</span>'
+                    : "";
             const safe = item.replace(/&/g, "&amp;").replace(/</g, "&lt;");
             return '<span class="role alt">' + safe + "</span>" + sep;
         })
         .join("");
 }
 
-/* ─────────────────────────────────────────
-   SINCRONIZAÇÃO DE TEXTO
-   ───────────────────────────────────────── */
 function syncText() {
     $("t-eyebrow").textContent = $("f-eyebrow").value;
     $("t-name").innerHTML = parseBold($("f-name").value);
     $("t-role").textContent = $("f-role").value;
 
-    // Empresa (opcional): só aparece quando preenchida
     const empresa = $("f-empresa") ? $("f-empresa").value.trim() : "";
     if ($("t-company")) {
         $("t-company").textContent = empresa;
@@ -170,71 +120,7 @@ function syncText() {
 }
 
 /* ─────────────────────────────────────────
-   SINCRONIZAÇÃO DE CORES
-   ───────────────────────────────────────── */
-function syncColors() {
-    const root = document.documentElement.style;
-    root.setProperty("--void", $("f-void").value);
-    root.setProperty("--text", $("f-text").value);
-    root.setProperty("--text-2", $("f-text2").value);
-    root.setProperty("--accent", $("f-accent").value);
-    root.setProperty("--border", $("f-border").value);
-    drawQR();
-}
-
-/* ─────────────────────────────────────────
-   TEMA E PALETA
-   ───────────────────────────────────────── */
-function applyThemeColors(themeKey) {
-    const t = THEMES[themeKey] || THEMES.light;
-    $("f-void").value = t.background;
-    $("f-text").value = t.textPrimary;
-    $("f-text2").value = t.textSecondary;
-    $("f-border").value = t.border;
-}
-
-function applyPaletteSignal(name) {
-    const p = PALETTES[name] || PALETTES.crimson;
-    const root = document.documentElement.style;
-    root.setProperty("--signal", p.signal);
-    root.setProperty("--signal-hover", p.signal);
-}
-
-function reflectThemeButtons() {
-    const lb = $("theme-light");
-    const db = $("theme-dark");
-    if (lb) lb.setAttribute("aria-pressed", String(currentTheme === "light"));
-    if (db) db.setAttribute("aria-pressed", String(currentTheme === "dark"));
-}
-
-function reflectPaletteSwatches() {
-    const swatches = document.querySelectorAll(".swatch[data-palette]");
-    swatches.forEach((s) => {
-        const active = s.getAttribute("data-palette") === currentPalette;
-        s.classList.toggle("is-active", active);
-        s.setAttribute("aria-pressed", String(active));
-    });
-}
-
-function setTheme(themeKey) {
-    currentTheme = THEMES[themeKey] ? themeKey : "light";
-    applyThemeColors(currentTheme);
-    reflectThemeButtons();
-    syncColors();
-}
-
-function setPalette(name) {
-    currentPalette = PALETTES[name] ? name : "crimson";
-    $("f-accent").value = PALETTES[currentPalette].accent;
-    applyPaletteSignal(currentPalette);
-    reflectPaletteSwatches();
-    syncColors();
-}
-
-/* ─────────────────────────────────────────
-   QR CODE (preview) — com contraste garantido
-   Em tema escuro o texto fica claro; o cartão do QR é branco, então
-   forçamos módulos escuros para o código permanecer escaneável.
+   QR CODE — contraste garantido (cartão branco)
    ───────────────────────────────────────── */
 function relativeLuminance(color) {
     const m = (color || "").match(/[\d.]+/g);
@@ -260,16 +146,13 @@ function relativeLuminance(color) {
     }
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
-
 function qrInkColor() {
     const text =
         getComputedStyle(document.documentElement)
             .getPropertyValue("--text")
             .trim() || "#0f172a";
-    // Cartão do QR é branco; garante módulos escuros (contraste/escaneável)
     return relativeLuminance(text) > 140 ? "#0f172a" : text;
 }
-
 function roundRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
     ctx.moveTo(x + r, y);
@@ -279,28 +162,24 @@ function roundRect(ctx, x, y, w, h, r) {
     ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
 }
-
 function drawQR() {
     const url = $("f-qrurl").value || "https://example.com";
     const dark = qrInkColor();
-
     let qr;
     try {
         qr = qrcode(0, "H");
         qr.addData(url);
         qr.make();
     } catch (e) {
-        console.warn("[QR] Falha ao gerar QR Code:", e);
+        console.warn("[QR] Falha ao gerar:", e);
         return;
     }
-
     const count = qr.getModuleCount();
     const canvas = $("qrCanvas");
     const size = canvas.width;
     const ctx = canvas.getContext("2d");
     const cell = size / count;
     const radius = cell * 0.42;
-
     ctx.clearRect(0, 0, size, size);
     ctx.fillStyle = dark;
     for (let row = 0; row < count; row++) {
@@ -310,6 +189,90 @@ function drawQR() {
                 ctx.fill();
             }
         }
+    }
+}
+
+/* ─────────────────────────────────────────
+   TEMA / CORES — UI ligada ao BannerTheme
+   ───────────────────────────────────────── */
+function reflectModeButtons() {
+    const mode = BannerTheme.getMode();
+    [
+        ["mode-light", "light"],
+        ["mode-dark", "dark"],
+        ["mode-auto", "auto"],
+    ].forEach(([id, val]) => {
+        if ($(id)) $(id).setAttribute("aria-pressed", String(mode === val));
+    });
+    const note = $("mode-note");
+    if (note) {
+        note.textContent =
+            mode === "auto"
+                ? "Seguindo o sistema: " +
+                  (BannerTheme.effectiveMode() === "dark" ? "escuro" : "claro")
+                : "";
+    }
+}
+
+function reflectPaletteSwatches() {
+    const pal = BannerTheme.getPalette();
+    document.querySelectorAll(".swatch[data-palette]").forEach((s) => {
+        const active = s.getAttribute("data-palette") === pal;
+        s.classList.toggle("is-active", active);
+        s.setAttribute("aria-pressed", String(active));
+    });
+}
+
+function reflectTokenInputs() {
+    TOKEN_FIELDS.forEach(({ name }) => {
+        const hex = BannerTheme.getToken(name) || "#000000";
+        const norm = BannerTheme.normalizeHex(hex);
+        const col = $("f-col-" + name);
+        const txt = $("f-hex-" + name);
+        const err = $("err-" + name);
+        if (col) col.value = norm;
+        if (txt) txt.value = norm;
+        if (err) err.textContent = "";
+        if (txt) txt.classList.remove("is-invalid");
+    });
+}
+
+function refreshThemeUI() {
+    reflectModeButtons();
+    reflectPaletteSwatches();
+    reflectTokenInputs();
+}
+
+function handleTokenColorInput(name) {
+    const col = $("f-col-" + name);
+    if (!col) return;
+    BannerTheme.setToken(name, col.value);
+    const txt = $("f-hex-" + name);
+    if (txt) {
+        txt.value = BannerTheme.normalizeHex(col.value);
+        txt.classList.remove("is-invalid");
+    }
+    const err = $("err-" + name);
+    if (err) err.textContent = "";
+    if (name === "accent") reflectPaletteSwatches();
+}
+
+function handleTokenHexInput(name) {
+    const txt = $("f-hex-" + name);
+    if (!txt) return;
+    const val = txt.value.trim();
+    const err = $("err-" + name);
+    if (BannerTheme.isValidHex(val)) {
+        const norm = BannerTheme.normalizeHex(val);
+        BannerTheme.setToken(name, norm);
+        const col = $("f-col-" + name);
+        if (col) col.value = norm;
+        txt.classList.remove("is-invalid");
+        if (err) err.textContent = "";
+        if (name === "accent") reflectPaletteSwatches();
+    } else {
+        txt.classList.add("is-invalid");
+        if (err) err.textContent = "Use #RGB ou #RRGGBB.";
     }
 }
 
@@ -344,7 +307,6 @@ function applyLayoutToggles() {
         dropZone.classList.add("has-photo");
         nameEl.textContent = filename || "foto-perfil.jpg";
     }
-
     function clearPhoto() {
         $("avatarImg").src = "";
         $("avatar").classList.remove("has-photo");
@@ -353,14 +315,12 @@ function applyLayoutToggles() {
         nameEl.textContent = EMPTY_LABEL;
         fileInput.value = "";
     }
-
     function loadFile(file) {
         if (!file || !file.type.startsWith("image/")) return;
         const reader = new FileReader();
         reader.onload = (ev) => applyPhoto(ev.target.result, file.name);
         reader.readAsDataURL(file);
     }
-
     window._clearPhoto = clearPhoto;
 
     fileInput.addEventListener("change", (e) => loadFile(e.target.files[0]));
@@ -388,15 +348,14 @@ function applyLayoutToggles() {
    ───────────────────────────────────────── */
 function currentExportOptions() {
     const ex = BANNER_CONFIG.export || {};
-    const sizeMode = $("f-export-size") ? $("f-export-size").value : "medium";
     return {
-        sizeMode: sizeMode,
+        sizeMode: $("f-export-size") ? $("f-export-size").value : "medium",
         format: $("f-format") ? $("f-format").value : "png",
         width: $("f-cw") ? parseInt($("f-cw").value, 10) : undefined,
         height: $("f-ch") ? parseInt($("f-ch").value, 10) : undefined,
         preserveAspect: $("f-preserve") ? $("f-preserve").checked : true,
         quality: $("f-quality") ? parseFloat($("f-quality").value) : 0.92,
-        filename: ex.filename || "banner-assinatura.png",
+        filename: ex.filename || "banner-assinatura",
     };
 }
 
@@ -405,55 +364,41 @@ function refreshExportUI() {
     const isCustom = opts.sizeMode === "custom";
     const fmtLossy = opts.format === "jpeg" || opts.format === "webp";
 
-    // Mostra/oculta blocos
-    const customBlock = $("custom-res");
-    if (customBlock) customBlock.hidden = !isCustom;
-    const qualityRow = $("quality-row");
-    if (qualityRow) qualityRow.hidden = !fmtLossy;
-
-    // Altura desabilitada quando preserva proporção
+    if ($("custom-res")) $("custom-res").hidden = !isCustom;
+    if ($("quality-row")) $("quality-row").hidden = !fmtLossy;
     if ($("f-ch")) $("f-ch").disabled = isCustom && opts.preserveAspect;
-
-    // Valor da qualidade
     if ($("quality-val") && $("f-quality"))
         $("quality-val").textContent =
             Math.round(parseFloat($("f-quality").value) * 100) + "%";
 
     if (typeof BannerExporter === "undefined") return;
-
     const W = BANNER_CONFIG.brand.bannerWidth;
     const H = BANNER_CONFIG.brand.bannerHeight;
     const d = BannerExporter.describeTarget(opts, W, H);
 
-    // Em modo custom com proporção travada, espelha a altura calculada
-    if (isCustom && opts.preserveAspect && $("f-ch"))
-        $("f-ch").value = d.height;
+    if (isCustom && opts.preserveAspect && $("f-ch")) $("f-ch").value = d.height;
 
     const hint = $("export-dim-hint");
     if (hint) {
-        const fmtName = (opts.format || "png").toUpperCase();
         hint.textContent =
             "Arquivo: " +
             d.width +
             " × " +
             d.height +
             " px · " +
-            fmtName +
+            (opts.format || "png").toUpperCase() +
             " · " +
             (d.uniform
                 ? d.scaleX.toFixed(2) + "×"
                 : d.scaleX.toFixed(2) + "× / " + d.scaleY.toFixed(2) + "×");
     }
-
     const validation = $("export-validation");
     if (validation) {
         validation.textContent = d.message || "";
         validation.classList.toggle("is-error", !d.valid);
         validation.classList.toggle("is-warn", d.valid && !!d.message);
     }
-
-    const btn = $("btn-png");
-    if (btn) btn.disabled = !d.valid;
+    if ($("btn-png")) $("btn-png").disabled = !d.valid;
 }
 
 async function handleExport() {
@@ -475,24 +420,128 @@ async function handleExport() {
     } finally {
         btn.classList.remove("is-loading");
         btn.textContent = original;
-        refreshExportUI(); // reavalia o estado disabled
+        refreshExportUI();
     }
 }
 
 /* ─────────────────────────────────────────
-   RESET — restaura integralmente o estado padrão
+   IMPORTAR / EXPORTAR CONFIGURAÇÃO (JSON)
+   ───────────────────────────────────────── */
+function gatherConfigSnapshot() {
+    return {
+        _type: "signature-banner-config",
+        version: 3,
+        theme: BannerTheme.exportConfig(),
+        content: {
+            eyebrow: $("f-eyebrow").value,
+            name: $("f-name").value,
+            role: $("f-role").value,
+            empresa: $("f-empresa") ? $("f-empresa").value : "",
+            specs: $("f-specs").value,
+            tagline: $("f-tagline").value,
+            email: $("f-email").value,
+            site: $("f-site").value,
+            qrUrl: $("f-qrurl").value,
+        },
+        layout: {
+            showQR: $("f-show-qr") ? $("f-show-qr").checked : true,
+            cursor: $("f-cursor") ? $("f-cursor").checked : true,
+        },
+        export: {
+            format: $("f-format") ? $("f-format").value : "png",
+            size: $("f-export-size") ? $("f-export-size").value : "medium",
+            width: $("f-cw") ? parseInt($("f-cw").value, 10) : 2400,
+            height: $("f-ch") ? parseInt($("f-ch").value, 10) : 640,
+            preserveAspect: $("f-preserve") ? $("f-preserve").checked : true,
+            quality: $("f-quality") ? parseFloat($("f-quality").value) : 0.92,
+        },
+    };
+}
+
+function applyConfigSnapshot(s) {
+    if (!s || typeof s !== "object") throw new Error("Arquivo inválido.");
+    if (s.theme) BannerTheme.importConfig(s.theme);
+
+    const c = s.content || {};
+    const setv = (id, v) => {
+        if ($(id) && v != null) $(id).value = v;
+    };
+    setv("f-eyebrow", c.eyebrow);
+    setv("f-name", c.name);
+    setv("f-role", c.role);
+    setv("f-empresa", c.empresa);
+    setv("f-specs", c.specs);
+    setv("f-tagline", c.tagline);
+    setv("f-email", c.email);
+    setv("f-site", c.site);
+    setv("f-qrurl", c.qrUrl);
+
+    if (s.layout) {
+        if ($("f-show-qr")) $("f-show-qr").checked = !!s.layout.showQR;
+        if ($("f-cursor")) $("f-cursor").checked = !!s.layout.cursor;
+    }
+    if (s.export) {
+        setv("f-format", s.export.format);
+        setv("f-export-size", s.export.size);
+        if ($("f-cw") && s.export.width) $("f-cw").value = s.export.width;
+        if ($("f-ch") && s.export.height) $("f-ch").value = s.export.height;
+        if ($("f-preserve"))
+            $("f-preserve").checked = s.export.preserveAspect !== false;
+        if ($("f-quality") && s.export.quality != null)
+            $("f-quality").value = s.export.quality;
+    }
+
+    syncText();
+    applyLayoutToggles();
+    refreshThemeUI();
+    refreshExportUI();
+}
+
+function exportConfigFile() {
+    const data = JSON.stringify(gatherConfigSnapshot(), null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "banner-config.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function importConfigFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        try {
+            applyConfigSnapshot(JSON.parse(ev.target.result));
+        } catch (e) {
+            console.error("[Import]", e);
+            alert(
+                "Não foi possível importar a configuração.\n\nDetalhe: " +
+                    (e && e.message ? e.message : e),
+            );
+        }
+    };
+    reader.readAsText(file);
+}
+
+/* ─────────────────────────────────────────
+   RESET — restaura integralmente o padrão
    ───────────────────────────────────────── */
 function resetToDefaults() {
+    BannerTheme.importConfig(JSON.parse(JSON.stringify(BANNER_CONFIG.theme)));
     initFromConfig();
     if (typeof window._clearPhoto === "function") window._clearPhoto();
     syncText();
-    syncColors();
     applyLayoutToggles();
+    refreshThemeUI();
     refreshExportUI();
 }
 
 /* ─────────────────────────────────────────
-   EVENT LISTENERS
+   LISTENERS
    ───────────────────────────────────────── */
 const TEXT_FIELDS = [
     "f-eyebrow",
@@ -504,61 +553,79 @@ const TEXT_FIELDS = [
     "f-email",
     "f-site",
 ];
-const COLOR_FIELDS = ["f-void", "f-text", "f-text2", "f-accent", "f-border"];
-
 TEXT_FIELDS.forEach((id) => {
     const el = $(id);
     if (el) el.addEventListener("input", syncText);
 });
-COLOR_FIELDS.forEach((id) => {
-    const el = $(id);
-    if (el) el.addEventListener("input", syncColors);
-});
 $("f-qrurl").addEventListener("input", drawQR);
 
-// Tema
-if ($("theme-light"))
-    $("theme-light").addEventListener("click", () => setTheme("light"));
-if ($("theme-dark"))
-    $("theme-dark").addEventListener("click", () => setTheme("dark"));
+// Modo de tema
+[
+    ["mode-light", "light"],
+    ["mode-dark", "dark"],
+    ["mode-auto", "auto"],
+].forEach(([id, val]) => {
+    const el = $(id);
+    if (el)
+        el.addEventListener("click", () => {
+            BannerTheme.setMode(val);
+            refreshThemeUI();
+        });
+});
 
 // Paletas
 document.querySelectorAll(".swatch[data-palette]").forEach((s) => {
-    s.addEventListener("click", () =>
-        setPalette(s.getAttribute("data-palette")),
-    );
+    s.addEventListener("click", () => {
+        BannerTheme.setPalette(s.getAttribute("data-palette"));
+        refreshThemeUI();
+    });
 });
 
-// Layout toggles
+// Cores por token (picker + hex)
+TOKEN_FIELDS.forEach(({ name }) => {
+    const col = $("f-col-" + name);
+    const txt = $("f-hex-" + name);
+    if (col) col.addEventListener("input", () => handleTokenColorInput(name));
+    if (txt) txt.addEventListener("input", () => handleTokenHexInput(name));
+});
+
+// Layout
 ["f-show-qr", "f-cursor"].forEach((id) => {
     const el = $(id);
     if (el) el.addEventListener("change", applyLayoutToggles);
 });
 
 // Exportação
-[
-    "f-format",
-    "f-export-size",
-    "f-cw",
-    "f-ch",
-    "f-preserve",
-    "f-quality",
-].forEach((id) => {
-    const el = $(id);
-    if (el) {
-        el.addEventListener("input", refreshExportUI);
-        el.addEventListener("change", refreshExportUI);
-    }
-});
+["f-format", "f-export-size", "f-cw", "f-ch", "f-preserve", "f-quality"].forEach(
+    (id) => {
+        const el = $(id);
+        if (el) {
+            el.addEventListener("input", refreshExportUI);
+            el.addEventListener("change", refreshExportUI);
+        }
+    },
+);
 
 $("btn-png").addEventListener("click", handleExport);
 $("btn-reset").addEventListener("click", resetToDefaults);
+
+// Import / Export de configuração
+if ($("btn-export-cfg"))
+    $("btn-export-cfg").addEventListener("click", exportConfigFile);
+if ($("btn-import-cfg") && $("f-import-cfg")) {
+    $("btn-import-cfg").addEventListener("click", () => $("f-import-cfg").click());
+    $("f-import-cfg").addEventListener("change", (e) =>
+        importConfigFile(e.target.files[0]),
+    );
+}
 
 /* ─────────────────────────────────────────
    BOOTSTRAP
    ───────────────────────────────────────── */
 initFromConfig();
+BannerTheme.onChange(() => drawQR());
+BannerTheme.init(BANNER_CONFIG.theme);
+refreshThemeUI();
 syncText();
-syncColors();
 applyLayoutToggles();
 refreshExportUI();
