@@ -6,25 +6,25 @@
         <title>Banner de Assinatura</title>
 
         <!--
-    Guia rápido de personalização
-    ──────────────────────────────────────────────────────────────────────────────
-    Para customizar o banner, edite APENAS: src/js/config.js
-    Não é necessário alterar este arquivo nem nenhum outro.
+        Guia rápido de personalização
+        ──────────────────────────────────────────────────────────────────────────────
+        Para customizar o banner, edite APENAS: src/js/config.js
+        Não é necessário alterar este arquivo nem nenhum outro.
 
-    Estrutura do projeto:
-      index.html              ← você está aqui (ponto de entrada)
-      src/
+        Estrutura do projeto:
+        index.html              ← você está aqui (ponto de entrada)
+        src/
         css/
-          banner.css          ← estilos (design tokens + layout + painel)
+            banner.css          ← estilos (design tokens + layout + painel)
         js/
-          config.js           ← ★ EDITE AQUI: textos, cores, links, export
-          qrcode.lib.js       ← lib de QR Code (Kazuhiko Arase, MIT) — não edite
-          banner.js           ← lógica principal — não edite
-      docs/
+            config.js           ← ★ EDITE AQUI: textos, cores, links, export
+            qrcode.lib.js       ← lib de QR Code (Kazuhiko Arase, MIT) — não edite
+            banner.js           ← lógica principal — não edite
+        docs/
         CUSTOMIZATION.md      ← guia de personalização
         DEVELOPMENT.md        ← guia de desenvolvimento
-    ──────────────────────────────────────────────────────────────────────────────
-  -->
+        ──────────────────────────────────────────────────────────────────────────────
+        -->
 
         <link rel="stylesheet" href="src/css/banner.css" />
     </head>
@@ -49,7 +49,7 @@
                 <div class="avatar-zone">
                     <div class="avatar" id="avatar">
                         <img id="avatarImg" alt="Foto de perfil" />
-                        <span class="monogram" id="monogram">GC</span>
+                        <span class="monogram" id="monogram">XD</span>
                     </div>
                 </div>
 
@@ -57,12 +57,12 @@
                 <div class="content">
                     <div class="eyebrow">
                         <span class="slash">//</span>
-                        <span id="t-eyebrow">SOFTWARE ENGINEER</span>
+                        <span id="t-eyebrow">Software Developer</span>
                         <span class="cursor" aria-hidden="true"></span>
                     </div>
 
                     <div class="name" id="t-name">
-                        <b>Guilherme de Souza Cruz</b>
+                        Guilherme de Souza <b>Cruz</b>
                     </div>
 
                     <div class="role-primary" id="t-role">
@@ -78,8 +78,8 @@
                     </div>
 
                     <div class="tagline" id="t-tagline">
-                        Desenvolvendo soluções digitais que transformam desafios
-                        em oportunidades.
+                        Projetando e desenvolvendo soluções digitais<br />
+                        que transformam desafios em oportunidades.
                     </div>
 
                     <div class="contact">
@@ -95,10 +95,8 @@
                             <rect x="2" y="4" width="20" height="16" rx="2" />
                             <path d="m2 7 10 6 10-6" />
                         </svg>
-                        <a id="c-email" href="#"
-                            >contato.guilhermescruz@gmail.com</a
-                        >
-                        <span class="arrow">·</span>
+                        <a id="c-email" href="#"></a>
+                        <span class="arrow"></span>
                         <svg
                             class="site-ico"
                             viewBox="0 0 24 24"
@@ -120,11 +118,10 @@
                             href="#"
                             target="_blank"
                             rel="noopener noreferrer"
-                        >
-                            <span id="t-site">bl4ck404.dev.br</span>
-                        </a>
+                        ></a>
                     </div>
                 </div>
+                <!-- /.content -->
 
                 <!-- Coluna 3: QR Code -->
                 <div class="qr-zone">
@@ -151,9 +148,7 @@
                     <input type="text" id="f-eyebrow" />
                 </div>
                 <div class="field">
-                    <label for="f-name"
-                        >Nome (use **negrito** no sobrenome)</label
-                    >
+                    <label for="f-name">Nome Completo</label>
                     <input type="text" id="f-name" />
                 </div>
                 <div class="field">
@@ -165,9 +160,7 @@
                     <input type="text" id="f-specs" />
                 </div>
                 <div class="field">
-                    <label for="f-tagline"
-                        >Tagline (use &lt;br&gt; para quebrar linha)</label
-                    >
+                    <label for="f-tagline">Tagline</label>
                     <input type="text" id="f-tagline" />
                 </div>
                 <div class="field">
@@ -182,9 +175,59 @@
                     <label for="f-qrurl">QR aponta para (URL)</label>
                     <input type="text" id="f-qrurl" />
                 </div>
-                <div class="field">
-                    <label for="f-photo">Foto profissional (opcional)</label>
-                    <input type="file" id="f-photo" accept="image/*" />
+                <div class="photo-uploader">
+                    <label class="field-label"
+                        >Foto profissional (opcional)</label
+                    >
+                    <div class="photo-drop-zone" id="photo-drop-zone">
+                        <input
+                            type="file"
+                            id="f-photo"
+                            accept="image/*"
+                            tabindex="-1"
+                        />
+                        <div class="photo-icon" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path
+                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                                />
+                                <circle cx="12" cy="13" r="4" />
+                            </svg>
+                        </div>
+                        <img class="photo-thumb" id="photo-thumb" alt="" />
+                        <div class="photo-info">
+                            <span class="photo-name" id="photo-name"
+                                >Clique ou arraste uma imagem</span
+                            >
+                            <span class="photo-hint"
+                                >JPG, PNG, WEBP · substitui o monograma</span
+                            >
+                        </div>
+                        <button
+                            class="photo-remove"
+                            id="photo-remove"
+                            type="button"
+                            aria-label="Remover foto"
+                        >
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.2"
+                                stroke-linecap="round"
+                            >
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -238,11 +281,11 @@
         <!-- /.panel -->
 
         <!--
-    Scripts — ordem de carregamento obrigatória:
-      1. qrcode.lib.js  — define a função global `qrcode`
-      2. config.js      — define o objeto global `BANNER_CONFIG`
-      3. banner.js      — consome ambos e inicializa a aplicação
-  -->
+        Scripts — ordem de carregamento obrigatória:
+        1. qrcode.lib.js  — define a função global `qrcode`
+        2. config.js      — define o objeto global `BANNER_CONFIG`
+        3. banner.js      — consome ambos e inicializa a aplicação
+        -->
         <script src="src/js/qrcode.lib.js"></script>
         <script src="src/js/config.js"></script>
         <script src="src/js/banner.js"></script>

@@ -24,7 +24,7 @@ const BANNER_CONFIG = {
      * Estes valores populam o formulário ao carregar a página.
      */
     defaults: {
-        eyebrow: "SOFTWARE ENGINEER",
+        eyebrow: "Software Developer",
         name: "**Guilherme de Souza Cruz**",
         role: "Desenvolvedor de Software",
         specs: "Full Stack Developer; AI & Automation; Freelancer",
@@ -32,7 +32,6 @@ const BANNER_CONFIG = {
             "Desenvolvendo soluções digitais que transformam desafios em oportunidades.",
         email: "contato.guilhermescruz@gmail.com",
         site: "bl4ck404.dev.br",
-        qrLabel: "CENTRAL DE CONTATOS",
         qrUrl: "https://devlinks-rocketseat-five.vercel.app",
     },
 
