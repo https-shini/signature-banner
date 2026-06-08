@@ -1,71 +1,133 @@
 /*
- * banner.css — Banner de Assinatura (v2)
- *  1. Tokens  2. Reset/Base  3. Página  4. Banner  5. Elementos
- *  6. Painel (seções/acordeão)  7. Componentes (segmented, swatches,
- *     switches, inputs, botões, validação)  8. Photo uploader
- *  9. Responsividade
+ * banner.css — Banner de Assinatura (v3)
+ *
+ * Estratégia de tema (alinhada ao design system bl4ck404.dev.br):
+ *  · Interface (página/painel): tokens semânticos --color-* — DARK por
+ *    padrão em :root, LIGHT via `body.light-mode`. O BannerTheme alterna
+ *    a classe conforme o tema do banner, mantendo tudo consistente.
+ *  · Banner: tokens LOCAIS (--void/--text/--text-2/--accent/--border/
+ *    --signal) sobrescritos em runtime pelo BannerTheme por variante.
+ *
+ * Índice: 1 Primitivos · 2 Tokens UI (dark/light) · 3 Tokens banner ·
+ *         4 Reset/Base · 5 Banner · 6 Painel · 7 Componentes · 8 Cores ·
+ *         9 Photo · 10 Responsivo
  */
 
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,400;9..144,500&display=swap");
 
-/* ══ 1. TOKENS ══ */
+/* ══ 1. PRIMITIVOS ══ */
 :root {
+    --_crimson-400: #fb7185;
     --_crimson-600: #e11d48;
     --_crimson-700: #be123c;
-    --_crimson-50: #fff1f2;
+    --_indigo-500: #6366f1;
     --_indigo-600: #4f46e5;
-    --_indigo-700: #4338ca;
     --_slate-0: #ffffff;
     --_slate-50: #f8fafc;
     --_slate-100: #f1f5f9;
     --_slate-150: #eaeff5;
+    --_slate-200: #e2e8f0;
+    --_slate-400: #94a3b8;
     --_slate-500: #64748b;
     --_slate-600: #475569;
     --_slate-800: #1e293b;
+    --_slate-850: #151f2e;
     --_slate-900: #0f172a;
-    --_green-700: #15803d;
+    --_slate-920: #0b1120;
+    --_slate-950: #070d19;
+    --_red-400: #f87171;
+    --_red-600: #dc2626;
+}
 
-    --void: var(--_slate-0);
-    --base: var(--_slate-50);
-    --raised: var(--_slate-100);
-    --surface-2: var(--_slate-150);
-    --page-bg: #eef1f6;
+/* ══ 2. TOKENS DA INTERFACE — DARK (padrão) ══ */
+:root {
+    --color-bg: var(--_slate-950);
+    --color-surface-1: var(--_slate-920);
+    --color-surface-2: var(--_slate-900);
+    --color-surface-3: var(--_slate-850);
+    --color-surface-4: var(--_slate-800);
 
-    --text: var(--_slate-900);
-    --text-2: var(--_slate-600);
-    --text-3: var(--_slate-500);
+    --color-text-1: var(--_slate-50);
+    --color-text-2: var(--_slate-200);
+    --color-text-3: var(--_slate-400);
+    --color-text-4: var(--_slate-600);
 
-    --accent: var(--_crimson-600);
-    --accent-hover: var(--_crimson-700);
-    --accent-soft: var(--_crimson-50);
-    --signal: var(--_indigo-600);
-    --signal-hover: var(--_indigo-700);
-    --status: var(--_green-700);
+    --color-border-1: rgba(255, 255, 255, 0.04);
+    --color-border-2: rgba(255, 255, 255, 0.1);
+    --color-border-3: rgba(255, 255, 255, 0.16);
 
-    --border: rgba(0, 0, 0, 0.09);
-    --border-strong: rgba(0, 0, 0, 0.16);
-    --border-brand: color-mix(in srgb, var(--_crimson-600) 40%, transparent);
+    --color-brand: var(--_crimson-600);
+    --color-brand-hover: var(--_crimson-700);
+    --color-brand-light: var(--_crimson-400);
+    --color-brand-subtle: color-mix(in srgb, var(--_crimson-600) 14%, transparent);
 
-    --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.09);
+    --color-error: var(--_red-400);
+    --color-warning: var(--_crimson-400);
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.55);
+    --shadow-lg: 0 8px 34px rgba(0, 0, 0, 0.6);
+    --shadow-xl: 0 16px 52px rgba(0, 0, 0, 0.65);
+
+    --font-body: "Inter", -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --ui-focus: 0 0 0 3px color-mix(in srgb, var(--color-brand) 32%, transparent);
+}
+
+/* ══ 2b. TOKENS DA INTERFACE — LIGHT ══ */
+body.light-mode {
+    --color-bg: #f2f4f8;
+    --color-surface-1: var(--_slate-0);
+    --color-surface-2: var(--_slate-50);
+    --color-surface-3: var(--_slate-100);
+    --color-surface-4: var(--_slate-150);
+
+    --color-text-1: var(--_slate-900);
+    --color-text-2: var(--_slate-800);
+    --color-text-3: var(--_slate-600);
+    --color-text-4: var(--_slate-500);
+
+    --color-border-1: rgba(0, 0, 0, 0.05);
+    --color-border-2: rgba(0, 0, 0, 0.09);
+    --color-border-3: rgba(0, 0, 0, 0.16);
+
+    --color-brand-light: var(--_crimson-600);
+    --color-brand-subtle: color-mix(in srgb, var(--_crimson-600) 9%, transparent);
+
+    --color-error: var(--_red-600);
+    --color-warning: var(--_crimson-700);
+
+    --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+    --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.07);
-    --shadow-xl:
-        0 16px 44px rgba(0, 0, 0, 0.13), 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-xl: 0 16px 44px rgba(0, 0, 0, 0.13), 0 4px 12px rgba(0, 0, 0, 0.08);
+}
 
-    --banner-w: 1200px;
-    --banner-h: 320px;
+/* ══ 3. TOKENS LOCAIS DO BANNER (defaults dark; JS sobrescreve) ══ */
+:root {
+    --void: #0b1220;
+    --text: #f1f5f9;
+    --text-2: #94a3b8;
+    --accent: #e11d48;
+    --border: #22304a;
+    --signal: #4f46e5;
+    --signal-hover: #4f46e5;
+
+    /* Derivados — seguem o acento/texto automaticamente */
+    --text-3: color-mix(in srgb, var(--text-2) 78%, transparent);
+    --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
+    --border-brand: color-mix(in srgb, var(--accent) 42%, transparent);
 
     --font-sans: "Inter", -apple-system, "Segoe UI", sans-serif;
     --font-serif:
         "Fraunces", "Tiempos Headline", Georgia, "Times New Roman", serif;
-    --font-mono: "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
-
-    /* UI editor */
-    --ui-radius: 10px;
-    --ui-gap: 18px;
-    --ui-focus: 0 0 0 3px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
-/* ══ 2. RESET ══ */
+/* ══ 4. RESET / BASE ══ */
 *,
 *::before,
 *::after {
@@ -73,23 +135,29 @@
     padding: 0;
     box-sizing: border-box;
 }
-
+html {
+    color-scheme: dark;
+}
+body.light-mode {
+    color-scheme: light;
+}
 :focus-visible {
-    outline: 2px solid var(--accent);
+    outline: 2px solid var(--color-brand);
     outline-offset: 2px;
 }
-
-/* ══ 3. PÁGINA ══ */
 body {
-    background: var(--page-bg);
-    font-family: var(--font-sans);
-    color: var(--text);
+    background: var(--color-bg);
+    font-family: var(--font-body);
+    color: var(--color-text-2);
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 40px 20px 80px;
     gap: 32px;
     min-height: 100vh;
+    transition:
+        background-color 0.4s ease,
+        color 0.4s ease;
 }
 
 .page-head {
@@ -99,16 +167,16 @@ body {
     font-weight: 300;
     font-size: 22px;
     letter-spacing: -0.01em;
-    color: var(--text-2);
+    color: var(--color-text-2);
 }
 .page-title b {
-    color: var(--text);
+    color: var(--color-text-1);
     font-weight: 600;
 }
 .page-sub {
     font-family: var(--font-mono);
     font-size: 12px;
-    color: var(--text-3);
+    color: var(--color-text-4);
     letter-spacing: 0.05em;
     margin-top: 6px;
 }
@@ -122,10 +190,10 @@ body {
     padding: 4px;
 }
 
-/* ══ 4. BANNER ══ */
+/* ══ 5. BANNER ══ */
 #banner {
-    width: var(--banner-w);
-    height: var(--banner-h);
+    width: 1200px;
+    height: 320px;
     flex-shrink: 0;
     position: relative;
     overflow: hidden;
@@ -148,19 +216,18 @@ body {
     box-shadow: var(--shadow-xl);
     isolation: isolate;
 }
-
 #banner::before {
     content: "";
     position: absolute;
     inset: 0;
     background-image:
         linear-gradient(
-            color-mix(in srgb, var(--text) 4%, transparent) 1px,
+            color-mix(in srgb, var(--text) 5%, transparent) 1px,
             transparent 1px
         ),
         linear-gradient(
             90deg,
-            color-mix(in srgb, var(--text) 4%, transparent) 1px,
+            color-mix(in srgb, var(--text) 5%, transparent) 1px,
             transparent 1px
         );
     background-size: 40px 40px;
@@ -169,14 +236,9 @@ body {
         #000 30%,
         transparent 80%
     );
-    mask-image: radial-gradient(
-        900px 400px at 70% 50%,
-        #000 30%,
-        transparent 80%
-    );
+    mask-image: radial-gradient(900px 400px at 70% 50%, #000 30%, transparent 80%);
     pointer-events: none;
 }
-
 .rail {
     position: absolute;
     left: 0;
@@ -192,7 +254,6 @@ body {
     );
 }
 
-/* ══ 5. ELEMENTOS DO BANNER ══ */
 .avatar-zone {
     width: 250px;
     height: 100%;
@@ -209,8 +270,8 @@ body {
     border-radius: 50%;
     background: radial-gradient(
         circle at 35% 28%,
-        var(--_slate-0),
-        var(--_slate-100) 78%
+        color-mix(in srgb, var(--text) 7%, var(--void)),
+        var(--void) 80%
     );
     border: 5px solid var(--border-brand);
     overflow: hidden;
@@ -220,7 +281,7 @@ body {
     justify-content: center;
     box-shadow:
         0 0 0 6px color-mix(in srgb, var(--accent) 8%, transparent),
-        0 12px 30px rgba(0, 0, 0, 0.12);
+        0 12px 30px rgba(0, 0, 0, 0.25);
     margin-left: 16px;
 }
 .avatar::after {
@@ -310,6 +371,7 @@ body {
     letter-spacing: -0.015em;
     line-height: 1;
     margin-bottom: 12px;
+    color: var(--text);
 }
 .name b {
     font-weight: 500;
@@ -371,9 +433,6 @@ body {
 .contact .site-ico {
     margin-left: 2px;
 }
-.contact .arrow {
-    color: var(--text-3);
-}
 .contact a {
     color: var(--text-2);
     text-decoration: none;
@@ -394,10 +453,10 @@ body {
     border-left: 1px solid var(--border);
     z-index: 2;
     position: relative;
-    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.025));
+    background: linear-gradient(180deg, transparent, rgba(0, 0, 0, 0.06));
 }
 .qr-card {
-    background: var(--_slate-0);
+    background: #ffffff;
     padding: 12px;
     border-radius: 14px;
     border: 1px solid var(--border);
@@ -414,7 +473,7 @@ body {
     display: block;
 }
 
-/* ══ 6. PAINEL / SEÇÕES (acordeão nativo) ══ */
+/* ══ 6. PAINEL / SEÇÕES ══ */
 .panel {
     width: 100%;
     max-width: 1240px;
@@ -422,11 +481,10 @@ body {
     flex-direction: column;
     gap: 14px;
 }
-
 .section {
-    background: var(--base);
-    border: 1px solid var(--border);
-    border-radius: 14px;
+    background: var(--color-surface-1);
+    border: 1px solid var(--color-border-2);
+    border-radius: var(--radius-lg);
     overflow: hidden;
 }
 .section > summary {
@@ -443,7 +501,7 @@ body {
     display: none;
 }
 .section > summary:hover {
-    background: var(--raised);
+    background: var(--color-surface-2);
 }
 .sec-title {
     font-family: var(--font-mono);
@@ -451,18 +509,18 @@ body {
     font-weight: 500;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--text);
+    color: var(--color-text-1);
 }
 .sec-desc {
     font-size: 12px;
-    color: var(--text-3);
+    color: var(--color-text-4);
     flex: 1;
 }
 .chevron {
     width: 9px;
     height: 9px;
-    border-right: 2px solid var(--text-3);
-    border-bottom: 2px solid var(--text-3);
+    border-right: 2px solid var(--color-text-4);
+    border-bottom: 2px solid var(--color-text-4);
     transform: rotate(45deg);
     transition: transform 0.2s ease;
     margin-right: 2px;
@@ -471,13 +529,13 @@ body {
     transform: rotate(-135deg);
 }
 .section[open] > summary {
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid var(--color-border-2);
 }
 .section-body {
     padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: var(--ui-gap);
+    gap: 18px;
 }
 
 .grid {
@@ -485,7 +543,6 @@ body {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 18px 22px;
 }
-
 .field {
     display: flex;
     flex-direction: column;
@@ -498,24 +555,22 @@ body {
     font-family: var(--font-mono);
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: var(--text-3);
+    color: var(--color-text-4);
 }
 .field-inline {
     justify-content: flex-end;
 }
 
 /* ══ 7. COMPONENTES ══ */
-
-/* Inputs texto / number / select */
 .field input[type="text"],
 .field input[type="number"],
 .field select {
-    background: var(--void);
-    border: 1px solid var(--border);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-2);
     border-radius: 8px;
     padding: 10px 12px;
-    color: var(--text);
-    font-family: var(--font-sans);
+    color: var(--color-text-1);
+    font-family: var(--font-body);
     font-size: 13.5px;
     outline: none;
     transition:
@@ -526,65 +581,43 @@ body {
 .field input[type="text"]:focus,
 .field input[type="number"]:focus,
 .field select:focus {
-    border-color: var(--accent);
+    border-color: var(--color-brand);
     box-shadow: var(--ui-focus);
 }
 .field input:disabled,
 .field select:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
 }
-
 .field select {
     cursor: pointer;
     appearance: none;
     -webkit-appearance: none;
-    background-image:
-        linear-gradient(45deg, transparent 50%, var(--text-3) 50%),
-        linear-gradient(135deg, var(--text-3) 50%, transparent 50%);
+    background-image: linear-gradient(45deg, transparent 50%, var(--color-text-3) 50%),
+        linear-gradient(135deg, var(--color-text-3) 50%, transparent 50%);
     background-position:
         calc(100% - 18px) center,
         calc(100% - 13px) center;
-    background-size:
-        5px 5px,
-        5px 5px;
+    background-size: 5px 5px, 5px 5px;
     background-repeat: no-repeat;
     padding-right: 34px;
 }
-
-.field input[type="color"] {
-    width: 100%;
-    height: 38px;
-    background: var(--void);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    cursor: pointer;
-    padding: 4px;
-}
-.field input[type="color"]:focus {
-    border-color: var(--accent);
-    box-shadow: var(--ui-focus);
-}
-
 .field input[type="range"] {
     width: 100%;
-    accent-color: var(--accent);
+    accent-color: var(--color-brand);
     cursor: pointer;
 }
 #quality-val {
-    color: var(--accent);
+    color: var(--color-brand-light);
     font-weight: 600;
 }
-
 .field-note {
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--text-3);
+    color: var(--color-text-4);
     letter-spacing: 0.02em;
     line-height: 1.5;
 }
-
-/* Validação */
 .validation {
     font-family: var(--font-mono);
     font-size: 11.5px;
@@ -592,18 +625,18 @@ body {
     min-height: 1em;
 }
 .validation.is-warn {
-    color: var(--_crimson-700);
+    color: var(--color-warning);
 }
 .validation.is-error {
-    color: #b91c1c;
+    color: var(--color-error);
     font-weight: 500;
 }
 
-/* Segmented control */
+/* Segmented */
 .segmented {
     display: inline-flex;
-    background: var(--raised);
-    border: 1px solid var(--border);
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-2);
     border-radius: 9px;
     padding: 3px;
     gap: 3px;
@@ -612,10 +645,10 @@ body {
 .seg-btn {
     border: none;
     background: transparent;
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-2);
+    color: var(--color-text-3);
     padding: 7px 18px;
     border-radius: 7px;
     cursor: pointer;
@@ -624,15 +657,15 @@ body {
         color 0.15s;
 }
 .seg-btn:hover {
-    color: var(--text);
+    color: var(--color-text-1);
 }
 .seg-btn[aria-pressed="true"] {
-    background: var(--void);
-    color: var(--accent);
-    box-shadow: var(--shadow-card);
+    background: var(--color-surface-1);
+    color: var(--color-brand-light);
+    box-shadow: var(--shadow-sm);
 }
 
-/* Swatches de paleta */
+/* Swatches */
 .swatches {
     display: flex;
     gap: 10px;
@@ -642,10 +675,10 @@ body {
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    border: 2px solid var(--void);
+    border: 2px solid var(--color-surface-1);
     background: var(--sw);
     cursor: pointer;
-    box-shadow: 0 0 0 1px var(--border);
+    box-shadow: 0 0 0 1px var(--color-border-2);
     transition:
         transform 0.12s,
         box-shadow 0.12s;
@@ -655,11 +688,11 @@ body {
 }
 .swatch.is-active {
     box-shadow:
-        0 0 0 2px var(--void),
+        0 0 0 2px var(--color-surface-1),
         0 0 0 4px var(--sw);
 }
 
-/* Switches */
+/* Switch */
 .switch {
     display: flex;
     align-items: center;
@@ -667,7 +700,7 @@ body {
     cursor: pointer;
     user-select: none;
     font-size: 13.5px;
-    color: var(--text);
+    color: var(--color-text-1);
 }
 .switch input {
     position: absolute;
@@ -679,8 +712,8 @@ body {
     position: relative;
     width: 42px;
     height: 24px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
+    background: var(--color-surface-4);
+    border: 1px solid var(--color-border-2);
     border-radius: 999px;
     flex-shrink: 0;
     transition: background 0.18s;
@@ -693,13 +726,13 @@ body {
     width: 18px;
     height: 18px;
     border-radius: 50%;
-    background: var(--void);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
     transition: transform 0.18s;
 }
 .switch input:checked + .switch-track {
-    background: var(--accent);
-    border-color: var(--accent);
+    background: var(--color-brand);
+    border-color: var(--color-brand);
 }
 .switch input:checked + .switch-track::after {
     transform: translateX(18px);
@@ -709,10 +742,10 @@ body {
 }
 .switch-label {
     font-size: 13.5px;
-    color: var(--text);
+    color: var(--color-text-1);
 }
 
-/* Botões de ação */
+/* Botões */
 .actions {
     display: flex;
     gap: 12px;
@@ -720,7 +753,7 @@ body {
     margin-top: 4px;
 }
 .action-btn {
-    font-family: var(--font-sans);
+    font-family: var(--font-body);
     font-size: 13.5px;
     font-weight: 500;
     padding: 11px 22px;
@@ -742,21 +775,25 @@ body {
     opacity: 0.55;
     cursor: not-allowed;
 }
+.action-btn.sm {
+    font-size: 12.5px;
+    padding: 9px 16px;
+}
 .action-btn.primary {
-    background: var(--accent);
+    background: var(--color-brand);
     color: #fff;
-    box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 28%, transparent);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--color-brand) 28%, transparent);
 }
 .action-btn.primary:hover:not(:disabled) {
-    background: var(--accent-hover);
+    background: var(--color-brand-hover);
 }
 .action-btn.ghost {
     background: transparent;
-    color: var(--text);
-    border: 1px solid var(--border);
+    color: var(--color-text-1);
+    border: 1px solid var(--color-border-2);
 }
 .action-btn.ghost:hover:not(:disabled) {
-    background: var(--raised);
+    background: var(--color-surface-3);
 }
 .action-btn.is-loading::before {
     content: "";
@@ -776,17 +813,87 @@ body {
 .hint {
     font-size: 12.5px;
     line-height: 1.6;
-    color: var(--text-3);
-    background: var(--base);
-    border: 1px solid var(--border);
-    border-radius: 12px;
+    color: var(--color-text-4);
+    background: var(--color-surface-1);
+    border: 1px solid var(--color-border-2);
+    border-radius: var(--radius-lg);
     padding: 16px 20px;
 }
 .hint b {
-    color: var(--text-2);
+    color: var(--color-text-2);
 }
 
-/* ══ 8. PHOTO UPLOADER ══ */
+/* ══ 8. UI DE CORES (token: picker + hex) ══ */
+.color-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 14px 22px;
+}
+.color-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+.color-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.color-control input[type="color"] {
+    width: 42px;
+    height: 38px;
+    flex-shrink: 0;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-2);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 4px;
+}
+.color-control input[type="color"]:focus {
+    border-color: var(--color-brand);
+    box-shadow: var(--ui-focus);
+}
+.hex-input {
+    flex: 1;
+    min-width: 0;
+    background: var(--color-surface-2);
+    border: 1px solid var(--color-border-2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--color-text-1);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    outline: none;
+    transition:
+        border-color 0.15s,
+        box-shadow 0.15s;
+}
+.hex-input:focus {
+    border-color: var(--color-brand);
+    box-shadow: var(--ui-focus);
+}
+.hex-input.is-invalid {
+    border-color: var(--color-error);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-error) 22%, transparent);
+}
+.hex-error {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--color-error);
+    min-height: 1em;
+}
+.config-io {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding-top: 4px;
+    border-top: 1px solid var(--color-border-1);
+}
+
+/* ══ 9. PHOTO UPLOADER ══ */
 .photo-uploader {
     display: flex;
     flex-direction: column;
@@ -797,8 +904,8 @@ body {
     display: flex;
     align-items: center;
     gap: 14px;
-    background: var(--void);
-    border: 1.5px dashed var(--border-strong);
+    background: var(--color-surface-2);
+    border: 1.5px dashed var(--color-border-3);
     border-radius: 10px;
     padding: 11px 14px;
     cursor: pointer;
@@ -810,15 +917,14 @@ body {
     max-width: 460px;
 }
 .photo-drop-zone:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 10%, transparent);
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brand) 10%, transparent);
 }
 .photo-drop-zone.dragover {
-    border-color: var(--accent);
+    border-color: var(--color-brand);
     border-style: solid;
-    background: var(--accent-soft);
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 15%, transparent);
+    background: var(--color-brand-subtle);
 }
 .photo-drop-zone input[type="file"] {
     position: absolute;
@@ -833,8 +939,8 @@ body {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: var(--raised);
-    border: 1px solid var(--border);
+    background: var(--color-surface-3);
+    border: 1px solid var(--color-border-2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -842,17 +948,16 @@ body {
 }
 .photo-drop-zone:hover .photo-icon,
 .photo-drop-zone.dragover .photo-icon {
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-    border-color: var(--accent);
+    background: var(--color-brand-subtle);
+    border-color: var(--color-brand);
 }
 .photo-icon svg {
     width: 19px;
     height: 19px;
-    stroke: var(--text-3);
+    stroke: var(--color-text-3);
 }
-.photo-drop-zone:hover .photo-icon svg,
-.photo-drop-zone.dragover .photo-icon svg {
-    stroke: var(--accent);
+.photo-drop-zone:hover .photo-icon svg {
+    stroke: var(--color-brand);
 }
 .photo-drop-zone.has-photo .photo-icon {
     display: none;
@@ -864,8 +969,7 @@ body {
     object-fit: cover;
     flex-shrink: 0;
     display: none;
-    border: 2px solid var(--border-brand);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+    border: 2px solid var(--color-brand);
 }
 .photo-drop-zone.has-photo .photo-thumb {
     display: block;
@@ -878,10 +982,9 @@ body {
     gap: 3px;
 }
 .photo-name {
-    font-family: var(--font-sans);
     font-size: 13px;
     font-weight: 500;
-    color: var(--text);
+    color: var(--color-text-1);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -889,7 +992,7 @@ body {
 .photo-hint {
     font-family: var(--font-mono);
     font-size: 10.5px;
-    color: var(--text-3);
+    color: var(--color-text-4);
     letter-spacing: 0.03em;
 }
 .photo-remove {
@@ -897,8 +1000,8 @@ body {
     width: 28px;
     height: 28px;
     border-radius: 7px;
-    border: 1px solid var(--border);
-    background: var(--void);
+    border: 1px solid var(--color-border-2);
+    background: var(--color-surface-1);
     cursor: pointer;
     flex-shrink: 0;
     align-items: center;
@@ -909,21 +1012,18 @@ body {
 .photo-remove svg {
     width: 13px;
     height: 13px;
-    stroke: var(--text-3);
+    stroke: var(--color-text-3);
     pointer-events: none;
 }
 .photo-remove:hover {
-    border-color: var(--accent);
-    background: var(--accent-soft);
-}
-.photo-remove:hover svg {
-    stroke: var(--accent);
+    border-color: var(--color-brand);
+    background: var(--color-brand-subtle);
 }
 .photo-drop-zone.has-photo .photo-remove {
     display: flex;
 }
 
-/* ══ 9. RESPONSIVIDADE ══ */
+/* ══ 10. RESPONSIVO ══ */
 @media (max-width: 768px) {
     body {
         padding: 24px 12px 64px;
@@ -938,7 +1038,8 @@ body {
     .sec-desc {
         display: none;
     }
-    .grid {
+    .grid,
+    .color-grid {
         grid-template-columns: 1fr;
     }
     .actions {
@@ -949,7 +1050,6 @@ body {
         justify-content: center;
     }
 }
-
 @media (max-width: 480px) {
     .page-title {
         font-size: 18px;
