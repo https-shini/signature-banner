@@ -10,6 +10,8 @@ Confirmar que o bucket `identify-workspaces` não existe antes da primeira aplic
 
 No projeto hospedado, a aplicação acessa PostgreSQL diretamente; não é necessário expor identity_studio na Data API. Se o schema estiver exposto, os mesmos testes REST e permissões precisam passar. Na instalação isolada ele é exposto para testar ataques diretos. Usuários não possuem UPDATE dos vínculos/propriedade; criação via interface é atribuída pela transação verificada.
 
+O cutover deve retirar as instâncias pessoais do tráfego e interromper suas escritas antes do snapshot final e da migration. Não permitir coexistência desse runtime com dados SaaS: o login pessoal é proprietário das tabelas e não oferece isolamento entre contas. Publicar o runtime restrito, conferir que todas as instâncias antigas saíram e só então liberar tráfego e criação de dados SaaS. Não suspender o serviço antecipadamente enquanto os requisitos externos de ativação ainda estiverem bloqueados.
+
 ## Atribuição explícita de legado
 
 `scripts/claim-legacy.ts` fornece `claimLegacy`: dry-run por padrão. O manifesto identifica userId, workspaceId, projectId, profileIds e SHA-256 do backup JSON. Validar o usuário cadastrado e a propriedade real do workspace/projeto; comparar payloads atuais ao backup e bytes de cada imagem. `apply=true` é uma ação administrativa explícita, jamais disparada por cadastro, login ou migração.

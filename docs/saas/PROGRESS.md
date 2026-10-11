@@ -46,6 +46,8 @@ A imagem PostgreSQL do stack completo via CLI falhou por espaço. Alternativa va
 
 ## Ativação pendente
 
+O mecanismo Auth hospedado foi verificado com sete chamadas funcionais/negativas: senha inválida, login, identidade da sessão, rotação do refresh token, logout, refresh após logout e JWT inválido. Todas passaram. A conta de teste foi previamente confirmada, não recebeu e-mail nessa execução e foi removida; o inventário voltou a zero usuários. Os dados atuais das oito tabelas continuam iguais ao backup restaurado no ensaio. Isso não ativa o frontend SaaS nem comprova confirmação/recuperação de produção. Ver [HOSTED-AUTH-VALIDATION.md](HOSTED-AUTH-VALIDATION.md).
+
 SaaS não foi ativado em produção. O bloqueio atual é a autenticação do domínio do remetente: o SMTP funciona, mas a mensagem real falhou em DMARC. Corrigir o alinhamento no transporte/provedor, verificar novos cabeçalhos e validar confirmação/recuperação e capacidade antes de liberar usuários públicos. Backup e rollback foram ensaiados, mas papel runtime, migration, novo bucket e variáveis SaaS ainda não foram aplicados no projeto hospedado. A titularidade do legado não foi confirmada: é possível preservar os registros sem associação para ativar contas novas após os demais requisitos; nenhum cadastro recebe os dados antigos automaticamente. Não publicar com requisitos de Auth/segurança em aberto. Ver [MIGRATION.md](MIGRATION.md), [ARCHITECTURE.md](ARCHITECTURE.md) e [TESTING.md](TESTING.md).
 
 A instrução direta de manter somente main prevalece sobre a sugestão dos anexos de branch dedicada/PR. Não foram criadas branches adicionais nem contratos pagos. O modo pessoal continua disponível para a infraestrutura atual; um banco migrado não aceita downgrade automático para schema 1.
