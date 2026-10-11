@@ -57,12 +57,25 @@ export function createOAuthRelay({ token, now = Date.now, hostname }) {
         }
         if (
           !body ||
-          Object.keys(body).some((key) => key !== 'state') ||
+          Object.keys(body).some((key) => !['state', 'issuer'].includes(key)) ||
           typeof body.state !== 'string' ||
           !/^[A-Za-z0-9_-]{16,128}$/.test(body.state)
         )
           return send(400, { error: 'Invalid state.' });
-        grant = { state: body.state, expiresAt: now() + 600_000 };
+        if (body.issuer !== undefined) {
+          const issuer = new URL(body.issuer);
+          if (
+            typeof body.issuer !== 'string' ||
+            body.issuer.length > 2048 ||
+            issuer.protocol !== 'https:' ||
+            issuer.username ||
+            issuer.password ||
+            issuer.search ||
+            issuer.hash
+          )
+            return send(400, { error: 'Invalid issuer.' });
+        }
+        grant = { state: body.state, issuer: body.issuer, expiresAt: now() + 600_000 };
         return send(201, { status: 'ready' });
       }
       if (req.method === 'GET' && url.pathname === '/callback') {
@@ -73,13 +86,17 @@ export function createOAuthRelay({ token, now = Date.now, hostname }) {
         if (!equal(url.searchParams.get('state'), grant.state))
           return send(400, { error: 'Invalid state.' });
         if (grant.result) return send(409, { error: 'Callback already received.' });
+        const issuer = url.searchParams.get('iss');
+        if (grant.issuer && !equal(issuer, grant.issuer))
+          return send(400, { error: 'Invalid issuer.' });
+        const issuerResponse = issuer ? { iss: issuer } : {};
         const code = url.searchParams.get('code');
         if (url.searchParams.has('error'))
-          grant.result = { state: grant.state, error: 'access_denied' };
+          grant.result = { state: grant.state, error: 'access_denied', ...issuerResponse };
         else {
           if (!code || code.length > 4096 || /[\u0000-\u001f\u007f]/.test(code))
             return send(400, { error: 'Invalid callback.' });
-          grant.result = { state: grant.state, code };
+          grant.result = { state: grant.state, code, ...issuerResponse };
         }
         res.writeHead(303, { Location: '/authorized' });
         return res.end();

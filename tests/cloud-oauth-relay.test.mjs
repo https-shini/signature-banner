@@ -116,3 +116,55 @@ test('relay expires unfinished grants and rejects cross-origin or oversized conf
     await new Promise((resolve) => server.close(resolve));
   }
 });
+
+test('relay preserves the verified authorization issuer and rejects missing or mismatched issuers', async () => {
+  const token = 'test-token-for-relay-at-least-32-characters';
+  const server = createOAuthRelay({ token });
+  server.listen(0, '127.0.0.1');
+  await once(server, 'listening');
+  try {
+    const base = 'http://127.0.0.1:' + server.address().port;
+    const headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
+    const state = 'test-state-with-adequate-entropy';
+    const issuer = 'https://api.supabase.com';
+    assert.equal(
+      (
+        await fetch(base + '/internal/begin', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ state, issuer }),
+        })
+      ).status,
+      201,
+    );
+    for (const suffix of ['', '&iss=https%3A%2F%2Funtrusted.example']) {
+      assert.equal(
+        (
+          await fetch(base + '/callback?state=' + state + '&code=example-code' + suffix, {
+            redirect: 'manual',
+          })
+        ).status,
+        400,
+      );
+      assert.equal((await fetch(base + '/internal/result', { headers })).status, 202);
+    }
+    assert.equal(
+      (
+        await fetch(
+          base + '/callback?' + new URLSearchParams({ state, code: 'example-code', iss: issuer }),
+          {
+            redirect: 'manual',
+          },
+        )
+      ).status,
+      303,
+    );
+    assert.deepEqual(await (await fetch(base + '/internal/result', { headers })).json(), {
+      state,
+      code: 'example-code',
+      iss: issuer,
+    });
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
