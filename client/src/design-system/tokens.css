@@ -1,0 +1,84 @@
+/* Aurora / Liquid Glass. Existing public aliases remain compatible. */
+:root {
+  --font-body: Arial, Helvetica, sans-serif;
+  --font-display: Georgia, 'Times New Roman', serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.5rem;
+  --text-display: clamp(2rem, 3.5vw, 3rem);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --color-ink: #242434;
+  --color-muted: #59516e;
+  --color-accent: #6551df;
+  --color-accent-hover: #503ac4;
+  --color-focus: #4f37c2;
+  --color-border: #bcb2d1;
+  --color-white: #ffffff;
+  --color-danger: #a52b42;
+  --color-success: #246846;
+  --color-canvas: #f2eff9;
+  --light-orchid: #d9cbfb;
+  --light-cyan: #c9e9ea;
+  --light-rose: #f1daeb;
+  --glass-panel: rgb(255 255 255 / 88%);
+  --glass-chrome: rgb(255 255 255 / 84%);
+  --glass-overlay: rgb(255 255 255 / 96%);
+  --glass-edge: rgb(255 255 255 / 95%);
+  --glass-reflection: linear-gradient(
+    125deg,
+    rgb(255 255 255 / 70%),
+    transparent 38%,
+    rgb(220 209 247 / 14%) 80%
+  );
+  --glass-blur: 16px;
+  --shadow-panel: inset 0 1px 0 var(--glass-edge), 0 4px 16px rgb(49 35 86 / 5%);
+  --shadow-floating: inset 0 1px 0 var(--glass-edge), 0 12px 32px rgb(49 35 86 / 9%);
+  --shadow-overlay: inset 0 1px 0 var(--glass-edge), 0 32px 80px rgb(31 20 54 / 24%);
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-enter: 280ms;
+  --ease-fluid: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --purple: var(--color-accent);
+  --muted: var(--color-muted);
+  --border: var(--color-border);
+  --ink: var(--color-ink);
+}
+/* Material fallback is shared by unsupported browsers and transparency preference. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-panel: #fff;
+    --glass-chrome: #faf8ff;
+    --glass-overlay: #fff;
+    --glass-blur: 0px;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-panel: #fff;
+    --glass-chrome: #faf8ff;
+    --glass-overlay: #fff;
+    --glass-blur: 0px;
+  }
+}
+/* Also supports an explicit appearance preference without changing content. */
+:root[data-transparency='reduced'] {
+  --glass-panel: #fff;
+  --glass-chrome: #faf8ff;
+  --glass-overlay: #fff;
+  --glass-blur: 0px;
+}

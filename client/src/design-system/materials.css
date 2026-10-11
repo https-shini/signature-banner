@@ -1,0 +1,41 @@
+/* Cards use reflected light, not a backdrop filter. Only chrome and dialogs blur. */
+:where(.glass, .surface, .asset-card, .metrics > div, .metrics > button, .studio-note) {
+  background-color: var(--glass-panel);
+  background-image: var(--glass-reflection);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+:where(.glass--chrome, .sidebar, .topbar) {
+  background-color: var(--glass-chrome);
+  background-image: var(--glass-reflection);
+  backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+  box-shadow: var(--shadow-floating);
+}
+:where(.glass--overlay, .modal) {
+  background-color: var(--glass-overlay);
+  background-image: var(--glass-reflection);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-overlay);
+}
+@media (forced-colors: active) {
+  :where(
+    .glass,
+    .surface,
+    .asset-card,
+    .sidebar,
+    .topbar,
+    .modal,
+    .hero,
+    .metrics > div,
+    .metrics > button
+  ) {
+    background: Canvas;
+    color: CanvasText;
+    border: 1px solid CanvasText;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+}
