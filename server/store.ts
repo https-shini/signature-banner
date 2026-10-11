@@ -78,7 +78,11 @@ export class Store {
     try {
       await s.transaction(async (tx) => {
         await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [schema]);
-        await tx.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
+        const namespace = await tx.query(
+          'SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = $1) AS present',
+          [schema],
+        );
+        if (!namespace.rows[0].present) await tx.query(`CREATE SCHEMA IF NOT EXISTS ${schema}`);
         await tx.query(
           `CREATE TABLE IF NOT EXISTS ${schema}.schema_migrations(version integer PRIMARY KEY)`,
         );
