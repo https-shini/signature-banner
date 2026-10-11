@@ -1,0 +1,149 @@
+/* SaaS surfaces reuse Liquid Glass materials, color aliases and interactive states. */
+.saas-access-card {
+  max-width: 520px;
+}
+.saas-eyebrow {
+  color: var(--color-accent);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  font-weight: 700;
+  margin: var(--space-6) 0 var(--space-3);
+}
+.saas-auth-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+.saas-security-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  color: var(--color-muted);
+  font-size: var(--text-sm);
+  margin-top: var(--space-6);
+}
+.saas-status {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: var(--color-green-surface);
+  color: var(--color-success);
+}
+.saas-context-bar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--color-border);
+}
+.saas-context-bar .brand-mark {
+  flex-shrink: 0;
+}
+.saas-context-selectors {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  flex: 1;
+  min-width: 0;
+}
+.saas-context-selectors .field {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  max-width: 300px;
+}
+.saas-context-selectors select {
+  width: 100%;
+}
+.saas-context-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.saas-dashboard {
+  max-width: 1280px;
+  padding: var(--space-10) var(--space-8);
+  margin: 0 auto;
+}
+.saas-dashboard section {
+  margin-top: var(--space-8);
+}
+.saas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-5);
+}
+.saas-card {
+  padding: var(--space-6);
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+.saas-card h3,
+.saas-card p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.saas-card p {
+  color: var(--color-muted);
+  line-height: 1.6;
+  flex: 1;
+}
+.saas-card small {
+  color: var(--color-muted);
+}
+.saas-card > svg {
+  color: var(--color-accent);
+}
+.saas-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+.saas-selected {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+.saas-shell > .app-shell .sidebar {
+  top: 0;
+}
+@media (max-width: 850px) {
+  .saas-context-bar {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+  .saas-context-selectors {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .saas-context-actions {
+    margin-left: auto;
+  }
+  .saas-dashboard {
+    padding: var(--space-6) var(--space-4);
+  }
+  .saas-dashboard .section-heading {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+}
+@media (max-width: 380px) {
+  .saas-context-actions {
+    flex-wrap: wrap;
+  }
+  .saas-context-bar > button > span {
+    display: none;
+  }
+  .saas-context-selectors {
+    gap: var(--space-2);
+  }
+}

@@ -47,9 +47,23 @@ import { NewAsset, NewProfile } from './components/CreationDialogs';
 
 type View = 'assets' | 'templates' | 'media' | 'identity' | 'settings';
 const initialProfile = () => sessionStorage.getItem('identity-profile') ?? '';
-export default function App() {
+export default function App({
+  accountEmail,
+  onSignOut,
+  onDashboard,
+  onDirtyChange,
+  initialAsset,
+}: {
+  initialAsset?: Asset;
+  accountEmail?: string;
+  onSignOut?: () => void;
+  onDashboard?: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
+} = {}) {
+  const [materialDirty, setMaterialDirty] = useState(false),
+    [templateDirty, setTemplateDirty] = useState(false);
   const [profiles, setProfiles] = useState<Profile[]>([]),
-    [profileId, setProfileId] = useState(initialProfile),
+    [profileId, setProfileId] = useState(() => initialAsset?.profileId ?? initialProfile()),
     [assets, setAssets] = useState<Asset[]>([]),
     [templates, setTemplates] = useState<Template[]>([]),
     [media, setMedia] = useState<Media[]>([]),
@@ -61,7 +75,7 @@ export default function App() {
     [search, setSearch] = useState(''),
     [sort, setSort] = useState('recent'),
     [favorites, setFavorites] = useState(false),
-    [selected, setSelected] = useState<Asset | null>(null);
+    [selected, setSelected] = useState<Asset | null>(initialAsset ?? null);
   const [loading, setLoading] = useState(true),
     [initialized, setInitialized] = useState(false),
     [error, setError] = useState(''),
@@ -76,6 +90,10 @@ export default function App() {
     [login, setLogin] = useState(false),
     [loginToken, setLoginToken] = useState(''),
     [authEpoch, setAuthEpoch] = useState(0);
+  useEffect(() => {
+    onDirtyChange?.(identityDirty || materialDirty || templateDirty);
+  }, [identityDirty, materialDirty, templateDirty, onDirtyChange]);
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   const uploadRef = useRef<HTMLInputElement>(null),
     importRef = useRef<HTMLInputElement>(null),
     generation = useRef(0);
@@ -102,6 +120,10 @@ export default function App() {
       .catch((e) => {
         if (cancelled) return;
         if (e instanceof ApiError && e.status === 401) {
+          if (onSignOut) {
+            onSignOut();
+            return;
+          }
           setLogin(true);
           setError(token.get() ? 'Chave inválida ou expirada.' : '');
         } else setError(e.message);
@@ -110,7 +132,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [authEpoch]);
+  }, [authEpoch, onSignOut]);
   async function refresh(id = profileId) {
     if (!id) {
       setAssets([]);
@@ -399,6 +421,12 @@ export default function App() {
           </div>
           <ChevronDown size={15} />
         </div>
+        {onDashboard && (
+          <button className="nav-item" onClick={onDashboard}>
+            <Grid2X2 size={19} />
+            Workspaces e projetos
+          </button>
+        )}
         <p className="nav-heading">SEU ESPAÇO</p>
         <nav tabIndex={0} aria-label="Navegação do espaço">
           {nav.map(({ id, label, icon: Icon }) => (
@@ -458,16 +486,19 @@ export default function App() {
             </div>
             <div>
               <strong>{profile?.kit.content.name || 'Meu espaço'}</strong>
-              <small>Workspace pessoal</small>
+              <small>{accountEmail ?? 'Workspace pessoal'}</small>
             </div>
-            <span className="status-dot" title="Identidade pessoal" />
+            <span
+              className="status-dot"
+              title={accountEmail ? 'Conta individual' : 'Identidade pessoal'}
+            />
           </div>
         </div>
       </GlassSurface>
       <div className="main-shell">
         <GlassSurface as="header" level="chrome" className="topbar">
           <div className="breadcrumb">
-            <span>Meu workspace</span>
+            <span>{accountEmail ? 'Projeto ativo' : 'Meu workspace'}</span>
             <span>/</span>
             <strong>
               {selected ? 'Editor' : (nav.find((n) => n.id === view)?.label ?? 'Configurações')}
@@ -503,6 +534,7 @@ export default function App() {
               profile={profile}
               images={images}
               media={media}
+              onDirtyChange={setMaterialDirty}
               onBack={() => setSelected(null)}
               onSaved={changed}
               onExport={setExporting}
@@ -881,6 +913,7 @@ export default function App() {
             </>
           ) : view === 'identity' ? (
             <ProfileEditor
+              workspaceShared={!!accountEmail}
               onDirtyChange={setIdentityDirty}
               key={profile!.id}
               profile={profile!}
@@ -970,14 +1003,16 @@ export default function App() {
                   <span className="metric-icon purple">
                     <Download size={23} />
                   </span>
-                  <h2>Uma cópia de tudo.</h2>
+                  <h2>{accountEmail ? 'Uma cópia do projeto.' : 'Uma cópia de tudo.'}</h2>
                   <p>
-                    Exporte todos os contextos, ativos, imagens, modelos e versões em um único
-                    arquivo JSON. Guarde uma cópia antes de excluir dados.
+                    {accountEmail
+                      ? 'Exporte os materiais e versões do projeto ativo, com as identidades, modelos e imagens do workspace. Outros projetos ficam fora deste arquivo.'
+                      : 'Exporte todos os contextos, ativos, imagens, modelos e versões em um único arquivo JSON.'}{' '}
+                    Guarde uma cópia antes de excluir dados.
                   </p>
                   <Button variant="primary" disabled={busy} onClick={() => perform(backup)}>
                     <ArrowDownToLine size={17} />
-                    Exportar backup completo
+                    {accountEmail ? 'Exportar backup do projeto' : 'Exportar backup completo'}
                   </Button>
                 </GlassSurface>
                 <GlassSurface as="section" level="panel" className="surface settings-card">
@@ -1021,10 +1056,14 @@ export default function App() {
                     Seus dados ficam no servidor deste ambiente. Não há analytics nem fontes
                     externas. A biblioteca aceita imagens estáticas e rejeita SVGs enviados.
                   </p>
-                  {token.get() && (
+                  {(onSignOut || token.get()) && (
                     <Button
                       variant="secondary"
                       onClick={() => {
+                        if (onSignOut) {
+                          onSignOut();
+                          return;
+                        }
                         token.clear();
                         setLoginToken('');
                         setLogin(true);
@@ -1105,6 +1144,7 @@ export default function App() {
           template={editingTemplate}
           media={media}
           images={images}
+          onDirtyChange={setTemplateDirty}
           onClose={() => setEditingTemplate(null)}
           onSaved={(t) => {
             setTemplates((current) => current.map((old) => (old.id === t.id ? t : old)));

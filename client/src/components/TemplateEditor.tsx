@@ -15,11 +15,13 @@ export function TemplateEditor({
   images,
   onClose,
   onSaved,
+  onDirtyChange,
 }: {
   template: Template;
   media: Media[];
   images: Record<string, string>;
   onClose: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
   onSaved: (t: Template) => void;
 }) {
   const edit = useEditHistory(template);
@@ -30,6 +32,10 @@ export function TemplateEditor({
     [error, setError] = useState(''),
     [notice, setNotice] = useState(false);
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   useEffect(() => {
     const listener = (e: BeforeUnloadEvent) => {
       if (dirty) {

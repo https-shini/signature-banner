@@ -15,7 +15,9 @@ export function ProfileEditor({
   onSaved,
   onDelete,
   onDirtyChange,
+  workspaceShared = false,
 }: {
+  workspaceShared?: boolean;
   profile: Profile;
   images: Record<string, string>;
   media: Media[];
@@ -114,7 +116,9 @@ export function ProfileEditor({
               if (
                 (!dirty || window.confirm('Descartar alterações não salvas?')) &&
                 window.confirm(
-                  `Excluir o contexto “${profile.name}”, seus ativos, modelos, fotos e histórico? Esta ação não pode ser desfeita. Exporte um backup antes.`,
+                  workspaceShared
+                    ? `Excluir a identidade “${profile.name}” e seus materiais, modelos, imagens e histórico em TODOS os projetos deste workspace? A exclusão é permanente. Exporte os materiais afetados antes.`
+                    : `Excluir o contexto “${profile.name}”, seus ativos, modelos, fotos e histórico? Esta ação não pode ser desfeita. Exporte um backup antes.`,
                 )
               )
                 onDelete();

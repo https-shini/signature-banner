@@ -1,7 +1,7 @@
 import { Button, GlassSurface } from './design-system';
 import { StrictMode, Component, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App';
+import { ApplicationRoot } from './saas/ApplicationRoot';
 import './design-system/tokens.css';
 import './styles.css';
 import './design-system/materials.css';
@@ -29,7 +29,7 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <App />
+      <ApplicationRoot />
     </ErrorBoundary>
   </StrictMode>,
 );

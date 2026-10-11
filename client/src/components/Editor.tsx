@@ -24,6 +24,7 @@ export function Editor({
   media,
   onBack,
   onSaved,
+  onDirtyChange,
   onExport,
   onTemplate,
 }: {
@@ -32,6 +33,7 @@ export function Editor({
   images: Record<string, string>;
   media: Media[];
   onBack: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
   onSaved: (a: Asset) => void;
   onExport: (a: Asset) => void;
   onTemplate: (a: Asset) => Promise<void>;
@@ -56,6 +58,10 @@ export function Editor({
     if (JSON.stringify(parsed) !== JSON.stringify(draft.tags)) setTagText(draft.tags.join(', '));
   }, [draft.tags, tagText]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
   useEffect(() => {
     const listener = (e: BeforeUnloadEvent) => {
       if (dirty) {

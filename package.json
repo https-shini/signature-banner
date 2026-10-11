@@ -14,7 +14,10 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/*.test.ts",
     "test:e2e": "tsx tests/browser.ts",
-    "test:visual": "node --import tsx tests/liquid-glass.mjs"
+    "test:visual": "node --import tsx tests/liquid-glass.mjs",
+    "saas:local": "node scripts/saas-local.mjs up",
+    "test:saas": "node --import tsx --test tests/saas.integration.ts",
+    "test:saas:browser": "node --import tsx tests/saas-browser.ts"
   },
   "dependencies": {
     "@fastify/static": "10.1.6",

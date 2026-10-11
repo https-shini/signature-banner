@@ -1,0 +1,15 @@
+# Evidências e problemas corrigidos
+
+| Problema observado                                            | Prioridade | Causa confirmada e correção                                                                                    | Verificação                                                                       |
+| ------------------------------------------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Recuperação autenticava mas não mostrava redefinição          | P1         | SDK atual descarta o tipo no PKCE automático. Um cliente oficial, troca explícita e estado de UI após JWT real | Link real, nova senha e link consumido passaram no Chromium                       |
+| Papel runtime não lia versão do schema                        | P1         | RLS ocultava metadata; policy SELECT somente na tabela de versões, privilégio concedido ao login restrito      | Startup sem CREATE/ownership; papel authenticated sem bypass                      |
+| Bootstrap inicial de Auth falhou                              | P1         | Funções base criadas com proprietário diferente; proprietário corrigido no bootstrap isolado                   | Novo volume com Auth real, cadastro e recuperação passaram                        |
+| REST começava antes do cache estar pronto                     | P1         | Schema ainda não carregado após provisionamento                                                                | Espera por GET autorizado real; erro/timeout permanecem falha                     |
+| Imagem compartilhada podia ser verificada só no projeto ativo | P1         | RLS do contexto ocultava referências de outros projetos da mesma conta                                         | Exclusão checa todo o workspace e retorna 409 enquanto em uso                     |
+| Remoção física antes do commit podia quebrar persistência     | P1         | Transação externa passou a incluir o handler inteiro                                                           | Limpeza após commit, fila por workspace, compensação e proteção a COMMIT ambíguo  |
+| Stack completo excedeu disco                                  | Ambiente   | Imagem PostgreSQL extensa                                                                                      | Stack reduzido oficial validado, portas loopback e geração privada de credenciais |
+
+Nenhum P0/P1 conhecido permanece aberto no escopo isolado após esses testes. Isso não afirma estabilidade do SaaS em produção: SMTP, redirects, migração/claim e testes após ativação permanecem não executados. A configuração Auth de produção retornou 403. A infraestrutura ativa não foi modificada para a fase SaaS.
+
+As verificações de isolamento usam JWTs reais A/B e papel sem bypass. Conexão administrativa foi usada somente para provisionamento, fixtures e contagens, não como evidência de autorização. O serviço SMTP local entrega mensagens ao Mailpit; isso não valida entregabilidade ou limites do SMTP de produção.

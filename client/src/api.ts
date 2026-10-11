@@ -11,17 +11,36 @@ export const token = {
   set: (value: string) => sessionStorage.setItem('identity-access', value),
   clear: () => sessionStorage.removeItem('identity-access'),
 };
+let sessionProvider: (() => Promise<string | undefined>) | undefined;
+let expiredSession: (() => void) | undefined;
+let context: { workspaceId?: string; projectId?: string } = {};
+export function configureSession(
+  provider: () => Promise<string | undefined>,
+  onExpired: () => void,
+) {
+  sessionProvider = provider;
+  expiredSession = onExpired;
+}
+export function setApiContext(workspaceId?: string, projectId?: string) {
+  context = { workspaceId, projectId };
+}
 export async function api<T>(path: string, method = 'GET', body?: unknown): Promise<T> {
-  const auth = token.get();
+  const selected = { ...context };
+  const auth = sessionProvider ? await sessionProvider() : token.get();
   const response = await fetch('/api' + path, {
     method,
     headers: {
       ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       ...(auth ? { Authorization: 'Bearer ' + auth } : {}),
+      ...(sessionProvider && selected.workspaceId
+        ? { 'X-Workspace-Id': selected.workspaceId }
+        : {}),
+      ...(sessionProvider && selected.projectId ? { 'X-Project-Id': selected.projectId } : {}),
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
   if (!response.ok) {
+    if (response.status === 401 && sessionProvider) expiredSession?.();
     const error = await response
       .json()
       .catch(() => ({ message: 'Falha na comunicação com o servidor.' }));

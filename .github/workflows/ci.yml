@@ -32,6 +32,9 @@ jobs:
       - run: npx playwright-core install --with-deps chromium
       - run: CHROMIUM_PATH="$(find "$HOME/.cache/ms-playwright" -path '*/chrome-linux*/chrome' -type f | head -1)" npm run test:e2e
       - run: CHROMIUM_PATH="$(find "$HOME/.cache/ms-playwright" -path '*/chrome-linux*/chrome' -type f | head -1)" npm run test:visual
+      - run: npm run saas:local
+      - run: npm run test:saas
+      - run: CHROMIUM_PATH="$(find "$HOME/.cache/ms-playwright" -path '*/chrome-linux*/chrome' -type f | head -1)" npm run test:saas:browser
       - uses: actions/upload-artifact@v4
         if: always()
         with:
