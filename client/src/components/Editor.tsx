@@ -1,3 +1,4 @@
+import { Button, Tabs, GlassSurface } from '../design-system';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Check, Download, Save, History, RotateCcw, BookmarkPlus } from 'lucide-react';
 import {
@@ -125,14 +126,14 @@ export function Editor({
             <span />
             {dirty ? 'Alterações não salvas' : `Salvo · v${saved.version}`}
           </span>
-          <button className="button secondary" disabled={busy} onClick={() => onExport(draft)}>
+          <Button variant="secondary" disabled={busy} onClick={() => onExport(draft)}>
             <Download size={16} />
             Exportar
-          </button>
-          <button className="button primary" disabled={busy || !dirty} onClick={save}>
+          </Button>
+          <Button variant="primary" disabled={busy || !dirty} onClick={save}>
             {dirty ? <Save size={16} /> : <Check size={16} />}{' '}
             {busy ? 'Salvando…' : 'Salvar alterações'}
-          </button>
+          </Button>
         </div>
       </header>
       {error && <ErrorNotice message={error} />}
@@ -160,8 +161,8 @@ export function Editor({
               </p>
             </div>
             <div className="row">
-              <button
-                className="button secondary"
+              <Button
+                variant="secondary"
                 disabled={busy}
                 onClick={() => {
                   if (
@@ -183,9 +184,9 @@ export function Editor({
                 }}
               >
                 Aplicar identidade
-              </button>
-              <button
-                className="button secondary"
+              </Button>
+              <Button
+                variant="secondary"
                 disabled={busy}
                 onClick={async () => {
                   setBusy(true);
@@ -201,31 +202,30 @@ export function Editor({
               >
                 <BookmarkPlus size={16} />
                 Salvar como modelo
-              </button>
+              </Button>
             </div>
           </div>
         </section>
-        <aside className="editor-panel">
-          <div className="editor-tabs" role="tablist" aria-label="Configurações do ativo">
-            {[
+        <GlassSurface as="aside" className="editor-panel">
+          <Tabs
+            label="Configurações do ativo"
+            items={[
               ['content', 'Conteúdo'],
               ['appearance', 'Aparência'],
               ['layout', 'Layout'],
               ['media', 'Mídia'],
               ['history', 'Histórico'],
-            ].map(([value, label]) => (
-              <button
-                role="tab"
-                aria-selected={tab === value}
-                key={value}
-                className={tab === value ? 'active' : ''}
-                onClick={() => setTab(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="editor-fields" role="tabpanel">
+            ]}
+            value={tab}
+            onChange={setTab}
+            panelId="asset-fields"
+          />
+          <div
+            className="editor-fields"
+            role="tabpanel"
+            id="asset-fields"
+            aria-labelledby={`asset-fields-tab-${tab}`}
+          >
             {tab === 'content' && (
               <>
                 <Field label="Nome do ativo">
@@ -294,7 +294,7 @@ export function Editor({
               />
             )}
           </div>
-        </aside>
+        </GlassSurface>
       </div>
     </div>
   );

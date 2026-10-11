@@ -1,3 +1,4 @@
+import { Button } from '../design-system';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import {
@@ -101,13 +102,13 @@ export function NewAsset({
         </Field>
         {error && <ErrorNotice message={error} />}
         <div className="modal-actions">
-          <button type="button" className="button secondary" disabled={busy} onClick={onClose}>
+          <Button type="button" variant="secondary" disabled={busy} onClick={onClose}>
             Cancelar
-          </button>
-          <button type="submit" className="button primary" disabled={busy || !name.trim()}>
+          </Button>
+          <Button type="submit" variant="primary" disabled={busy || !name.trim()}>
             <Plus size={17} />
             {busy ? 'Criando…' : 'Criar ativo'}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>
@@ -164,12 +165,12 @@ export function NewProfile({
         </Field>
         {error && <ErrorNotice message={error} />}
         <div className="modal-actions">
-          <button className="button secondary" type="button" disabled={busy} onClick={onClose}>
+          <Button variant="secondary" type="button" disabled={busy} onClick={onClose}>
             Cancelar
-          </button>
-          <button className="button primary" disabled={busy || !name.trim()}>
+          </Button>
+          <Button variant="primary" disabled={busy || !name.trim()}>
             {busy ? 'Criando…' : 'Criar contexto'}
-          </button>
+          </Button>
         </div>
       </form>
     </Modal>

@@ -1,3 +1,4 @@
+import { Button, PageHeading, GlassSurface } from '../design-system';
 import { ArrowUpRight, Copy, Settings2, Trash2 } from 'lucide-react';
 import { systemTemplates, type Profile, type Template } from '../../../shared/model';
 import { Empty } from './ui';
@@ -24,22 +25,22 @@ export function TemplateLibrary({
 }) {
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">UM BOM PONTO DE PARTIDA</p>
-          <h1>
+      <PageHeading
+        eyebrow={<>UM BOM PONTO DE PARTIDA</>}
+        title={
+          <>
             Modelos<span className="heading-dot">.</span>
-          </h1>
-          <p className="muted">Comece com uma composição pronta. Termine com algo só seu.</p>
-        </div>
-        <span className="pill">{systemTemplates.length + templates.length} modelos</span>
-      </div>
+          </>
+        }
+        description={<>Comece com uma composição pronta. Termine com algo só seu.</>}
+        actions={<span className="pill">{systemTemplates.length + templates.length} modelos</span>}
+      />
       <h2 className="subheading">
         Selecionados para você <span className="pill">Studio</span>
       </h2>
       <div className="template-grid">
         {systemTemplates.map((t) => (
-          <article className="template-card surface" key={t.id}>
+          <GlassSurface as="article" level="panel" className="template-card surface" key={t.id}>
             <div className={'template-preview ' + (t.platformId === 'avatar' ? 'square' : '')}>
               <Preview
                 document={{
@@ -54,11 +55,11 @@ export function TemplateLibrary({
             <div>
               <h3>{t.name}</h3>
               <p>{t.subtitle}</p>
-              <button className="button secondary full" onClick={() => onUse(t)}>
+              <Button variant="secondary" className="full" onClick={() => onUse(t)}>
                 Usar modelo <ArrowUpRight size={16} />
-              </button>
+              </Button>
             </div>
-          </article>
+          </GlassSurface>
         ))}
       </div>
       <h2 className="subheading">
@@ -72,16 +73,16 @@ export function TemplateLibrary({
       ) : (
         <div className="template-grid">
           {templates.map((t) => (
-            <article className="template-card surface" key={t.id}>
+            <GlassSurface as="article" level="panel" className="template-card surface" key={t.id}>
               <div className="template-preview">
                 <Preview document={t.document} images={images} />
               </div>
               <div>
                 <h3>{t.name}</h3>
                 <div className="row">
-                  <button className="button secondary" onClick={() => onUse(t)}>
+                  <Button variant="secondary" onClick={() => onUse(t)}>
                     Usar modelo
-                  </button>
+                  </Button>
                   <button
                     className="icon-button"
                     aria-label={`Duplicar modelo ${t.name}`}
@@ -108,7 +109,7 @@ export function TemplateLibrary({
                   </button>
                 </div>
               </div>
-            </article>
+            </GlassSurface>
           ))}
         </div>
       )}

@@ -1,7 +1,10 @@
+import { Button, GlassSurface } from './design-system';
 import { StrictMode, Component, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
+import './design-system/tokens.css';
 import './styles.css';
+import './design-system/materials.css';
 class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {
@@ -10,13 +13,13 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean
   render() {
     return this.state.failed ? (
       <main className="login-page">
-        <div className="surface login-card">
+        <GlassSurface as="div" level="panel" className="surface login-card">
           <h1>Não foi possível abrir o Studio.</h1>
           <p>Recarregue a página para tentar novamente. Os dados salvos permanecem no servidor.</p>
-          <button className="button primary" onClick={() => location.reload()}>
+          <Button variant="primary" onClick={() => location.reload()}>
             Recarregar
-          </button>
-        </div>
+          </Button>
+        </GlassSurface>
       </main>
     ) : (
       this.props.children

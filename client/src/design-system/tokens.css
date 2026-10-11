@@ -1,0 +1,128 @@
+/* Aurora / Liquid Glass. Existing public aliases remain compatible. */
+:root {
+  --font-body: Arial, Helvetica, sans-serif;
+  --font-display: Georgia, 'Times New Roman', serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.125rem;
+  --text-title: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-heading: clamp(1.625rem, 2.8vw, 1.875rem);
+  --text-symbol: 2.25rem;
+  --text-display: clamp(2rem, 3.5vw, 3rem);
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --color-ink: #242434;
+  --color-muted: #59516e;
+  --color-accent: #6551df;
+  --color-accent-hover: #503ac4;
+  --color-focus: #4f37c2;
+  --color-border: #d3c9e4;
+  --color-control-border: #8e819f;
+  --color-white: #ffffff;
+  --color-danger: #a52b42;
+  --color-success: #246846;
+  --color-canvas: #f2eff9;
+  --light-orchid: #d9cbfb;
+  --light-cyan: #c9e9ea;
+  --light-rose: #f1daeb;
+  --color-surface: #ffffff;
+  --color-surface-soft: #f6f3fb;
+  --color-surface-hover: #eee8fa;
+  --color-selected: #e8e0fc;
+  --color-warm-surface: #f8eee6;
+  --color-warm-ink: #70523e;
+  --color-green-surface: #eaf5f0;
+  --color-blue-surface: #edf2f9;
+  --color-blue-ink: #465c78;
+  --color-danger-surface: #fff0f3;
+  --color-danger-border: #d898a6;
+  --color-art-dark: #172139;
+  --color-art-avatar: #292d49;
+  --color-art-light-ink: #c8bddc;
+  --color-checker-base: #f5f5f8;
+  --color-checker-tile: #eaeaf0;
+  --color-scrim: rgb(40 33 57 / 40%);
+  --ambient-background:
+    radial-gradient(ellipse at 80% 0%, var(--light-orchid), transparent 50%),
+    radial-gradient(ellipse at 25% 70%, var(--light-cyan), transparent 55%),
+    radial-gradient(ellipse at 100% 85%, var(--light-rose), transparent 45%), var(--color-canvas);
+  --hero-background:
+    radial-gradient(ellipse at 85% 20%, rgb(255 255 255 / 90%), transparent 40%),
+    linear-gradient(115deg, rgb(221 208 250 / 90%), rgb(224 243 240 / 85%));
+  --brand-background: linear-gradient(145deg, #8b74ee, var(--purple) 55%, #3d2b98);
+  --shadow-brand: inset 0 1px 1px rgb(255 255 255 / 70%), 0 4px 12px rgb(101 81 223 / 25%);
+  --shadow-button: 0 4px 12px rgb(101 81 223 / 15%);
+  --shadow-preview: 0 8px 24px rgb(31 20 54 / 14%);
+  --glass-panel: rgb(255 255 255 / 88%);
+  --glass-chrome: rgb(255 255 255 / 84%);
+  --glass-overlay: rgb(255 255 255 / 96%);
+  --glass-edge: rgb(255 255 255 / 95%);
+  --glass-reflection: linear-gradient(
+    125deg,
+    rgb(255 255 255 / 70%),
+    transparent 38%,
+    rgb(220 209 247 / 14%) 80%
+  );
+  --glass-blur: 16px;
+  --glass-filter: blur(var(--glass-blur)) saturate(120%);
+  --glass-overlay-filter: blur(var(--glass-blur));
+  --glass-backdrop-filter: blur(calc(var(--glass-blur) / 5));
+  --shadow-panel: inset 0 1px 0 var(--glass-edge), 0 4px 16px rgb(49 35 86 / 5%);
+  --shadow-floating: inset 0 1px 0 var(--glass-edge), 0 12px 32px rgb(49 35 86 / 9%);
+  --shadow-overlay: inset 0 1px 0 var(--glass-edge), 0 32px 80px rgb(31 20 54 / 24%);
+  --duration-fast: 120ms;
+  --duration-normal: 180ms;
+  --duration-enter: 280ms;
+  --ease-fluid: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --purple: var(--color-accent);
+  --muted: var(--color-muted);
+  --border: var(--color-border);
+  --ink: var(--color-ink);
+}
+/* Material fallback is shared by unsupported browsers and transparency preference. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-panel: #fff;
+    --glass-chrome: #faf8ff;
+    --glass-overlay: #fff;
+    --glass-blur: 0px;
+    --glass-filter: none;
+    --glass-overlay-filter: none;
+    --glass-backdrop-filter: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-panel: #fff;
+    --glass-chrome: #faf8ff;
+    --glass-overlay: #fff;
+    --glass-blur: 0px;
+    --glass-filter: none;
+    --glass-overlay-filter: none;
+    --glass-backdrop-filter: none;
+  }
+}
+/* Also supports an explicit appearance preference without changing content. */
+:root[data-transparency='reduced'] {
+  --glass-panel: #fff;
+  --glass-chrome: #faf8ff;
+  --glass-overlay: #fff;
+  --glass-blur: 0px;
+  --glass-filter: none;
+  --glass-overlay-filter: none;
+  --glass-backdrop-filter: none;
+}

@@ -1,0 +1,449 @@
+{
+  "stage": "after",
+  "errors": [],
+  "external": [],
+  "checks": [
+    "tabs-keyboard-desktop",
+    "modal-focus-trap-escape-restore-desktop",
+    "reduced-motion",
+    "reduced-transparency",
+    "opaque-material-fallback",
+    "forced-colors",
+    "text-200-sidebar-scroll",
+    "text-200",
+    "network-error-recovery",
+    "tabs-keyboard-tablet",
+    "modal-focus-trap-escape-restore-tablet",
+    "tabs-keyboard-mobile",
+    "modal-focus-trap-escape-restore-mobile",
+    "mobile-settings-logout",
+    "tabs-keyboard-compact",
+    "modal-focus-trap-escape-restore-compact"
+  ],
+  "performance": [
+    {
+      "device": "desktop",
+      "navigationMs": 74,
+      "blurSurfaces": 2
+    },
+    {
+      "device": "tablet",
+      "navigationMs": 52,
+      "blurSurfaces": 2
+    },
+    {
+      "device": "mobile",
+      "navigationMs": 60,
+      "blurSurfaces": 2
+    },
+    {
+      "device": "compact",
+      "navigationMs": 47,
+      "blurSurfaces": 2
+    }
+  ],
+  "audit": [
+    {
+      "name": "login",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "library",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "editor",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "export-entry",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "export",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "identity",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "media",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "templates",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "settings",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "reduced-motion",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "reduced-transparency",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "text-200",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "network-error",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "login",
+      "device": "tablet",
+      "violations": []
+    },
+    {
+      "name": "library",
+      "device": "tablet",
+      "violations": []
+    },
+    {
+      "name": "editor",
+      "device": "tablet",
+      "violations": []
+    },
+    {
+      "name": "export-entry",
+      "device": "tablet",
+      "violations": []
+    },
+    {
+      "name": "export",
+      "device": "tablet",
+      "violations": []
+    },
+    {
+      "name": "identity",
+      "device": "tablet",
+      "violations": []
+    },
+    {
+      "name": "media",
+      "device": "tablet",
+      "violations": []
+    },
+    {
+      "name": "templates",
+      "device": "tablet",
+      "violations": []
+    },
+    {
+      "name": "settings",
+      "device": "tablet",
+      "violations": []
+    },
+    {
+      "name": "login",
+      "device": "mobile",
+      "violations": []
+    },
+    {
+      "name": "library",
+      "device": "mobile",
+      "violations": []
+    },
+    {
+      "name": "editor",
+      "device": "mobile",
+      "violations": []
+    },
+    {
+      "name": "export-entry",
+      "device": "mobile",
+      "violations": []
+    },
+    {
+      "name": "export",
+      "device": "mobile",
+      "violations": []
+    },
+    {
+      "name": "identity",
+      "device": "mobile",
+      "violations": []
+    },
+    {
+      "name": "media",
+      "device": "mobile",
+      "violations": []
+    },
+    {
+      "name": "templates",
+      "device": "mobile",
+      "violations": []
+    },
+    {
+      "name": "settings",
+      "device": "mobile",
+      "violations": []
+    },
+    {
+      "name": "login",
+      "device": "compact",
+      "violations": []
+    },
+    {
+      "name": "library",
+      "device": "compact",
+      "violations": []
+    },
+    {
+      "name": "editor",
+      "device": "compact",
+      "violations": []
+    },
+    {
+      "name": "export-entry",
+      "device": "compact",
+      "violations": []
+    },
+    {
+      "name": "export",
+      "device": "compact",
+      "violations": []
+    },
+    {
+      "name": "identity",
+      "device": "compact",
+      "violations": []
+    },
+    {
+      "name": "media",
+      "device": "compact",
+      "violations": []
+    },
+    {
+      "name": "templates",
+      "device": "compact",
+      "violations": []
+    },
+    {
+      "name": "settings",
+      "device": "compact",
+      "violations": []
+    }
+  ],
+  "overflow": [
+    {
+      "name": "login",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "library",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "editor",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "export-entry",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "export",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "identity",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "media",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "templates",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "settings",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "reduced-motion",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "reduced-transparency",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "text-200",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "network-error",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
+      "name": "login",
+      "device": "tablet",
+      "overflow": false
+    },
+    {
+      "name": "library",
+      "device": "tablet",
+      "overflow": false
+    },
+    {
+      "name": "editor",
+      "device": "tablet",
+      "overflow": false
+    },
+    {
+      "name": "export-entry",
+      "device": "tablet",
+      "overflow": false
+    },
+    {
+      "name": "export",
+      "device": "tablet",
+      "overflow": false
+    },
+    {
+      "name": "identity",
+      "device": "tablet",
+      "overflow": false
+    },
+    {
+      "name": "media",
+      "device": "tablet",
+      "overflow": false
+    },
+    {
+      "name": "templates",
+      "device": "tablet",
+      "overflow": false
+    },
+    {
+      "name": "settings",
+      "device": "tablet",
+      "overflow": false
+    },
+    {
+      "name": "login",
+      "device": "mobile",
+      "overflow": false
+    },
+    {
+      "name": "library",
+      "device": "mobile",
+      "overflow": false
+    },
+    {
+      "name": "editor",
+      "device": "mobile",
+      "overflow": false
+    },
+    {
+      "name": "export-entry",
+      "device": "mobile",
+      "overflow": false
+    },
+    {
+      "name": "export",
+      "device": "mobile",
+      "overflow": false
+    },
+    {
+      "name": "identity",
+      "device": "mobile",
+      "overflow": false
+    },
+    {
+      "name": "media",
+      "device": "mobile",
+      "overflow": false
+    },
+    {
+      "name": "templates",
+      "device": "mobile",
+      "overflow": false
+    },
+    {
+      "name": "settings",
+      "device": "mobile",
+      "overflow": false
+    },
+    {
+      "name": "login",
+      "device": "compact",
+      "overflow": false
+    },
+    {
+      "name": "library",
+      "device": "compact",
+      "overflow": false
+    },
+    {
+      "name": "editor",
+      "device": "compact",
+      "overflow": false
+    },
+    {
+      "name": "export-entry",
+      "device": "compact",
+      "overflow": false
+    },
+    {
+      "name": "export",
+      "device": "compact",
+      "overflow": false
+    },
+    {
+      "name": "identity",
+      "device": "compact",
+      "overflow": false
+    },
+    {
+      "name": "media",
+      "device": "compact",
+      "overflow": false
+    },
+    {
+      "name": "templates",
+      "device": "compact",
+      "overflow": false
+    },
+    {
+      "name": "settings",
+      "device": "compact",
+      "overflow": false
+    }
+  ]
+}
