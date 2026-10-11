@@ -17,6 +17,7 @@ import {
 import { DomainError, Store } from './store';
 import { normalizeImage } from './images';
 import { portableSchema } from '../shared/portable';
+import { registerSaas, type SaasOptions } from './saas';
 
 export function createApp(
   store: Store,
@@ -25,9 +26,15 @@ export function createApp(
     serveStatic?: boolean;
     logger?: boolean;
     publicHostname?: string;
+    saas?: SaasOptions;
   } = {},
 ) {
-  const app = Fastify({ logger: options.logger ?? false, bodyLimit: 24 * 1024 * 1024 });
+  const app = Fastify({
+    logger: options.logger
+      ? { redact: ['req.headers.authorization', 'req.headers.cookie'] }
+      : false,
+    bodyLimit: 24 * 1024 * 1024,
+  });
   const id = (request: { params: unknown }, key = 'id') =>
     idSchema.parse((request.params as Record<string, string>)[key]);
   app.addHook('onRequest', async (req, reply) => {
@@ -43,7 +50,7 @@ export function createApp(
     reply.header('X-Content-Type-Options', 'nosniff').header('Referrer-Policy', 'no-referrer');
     reply.header(
       'Content-Security-Policy',
-      "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+      `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' ${options.saas ? new URL(options.saas.url).origin : ''}; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`,
     );
     if (req.url.startsWith('/api/') || req.routeOptions.url?.startsWith('/api/')) {
       reply.header('Cache-Control', 'no-store');
@@ -59,7 +66,7 @@ export function createApp(
       }
       if (req.headers['sec-fetch-site'] === 'cross-site')
         return reply.code(403).send({ message: 'Origem não autorizada.' });
-      if (options.token) {
+      if (options.token && !options.saas && req.routeOptions.url !== '/api/auth/config') {
         const supplied = req.headers.authorization?.replace(/^Bearer /, '') ?? '';
         const a = Buffer.from(supplied),
           b = Buffer.from(options.token);
@@ -89,46 +96,64 @@ export function createApp(
     const status = (error as { statusCode?: number }).statusCode;
     if (status && status >= 400 && status < 500)
       return reply.code(status).send({ message: 'Requisição inválida.' });
+    const pgCode = (error as { code?: string }).code;
+    if (['42501', '23503', '23514'].includes(pgCode ?? ''))
+      return reply.code(403).send({ message: 'Operação não autorizada ou vínculo inválido.' });
+    if (pgCode === '40001')
+      return reply
+        .code(409)
+        .send({ message: 'Este recurso mudou em outra sessão. Recarregue e tente novamente.' });
     app.log.error(error);
     return reply.code(500).send({ message: 'Não foi possível concluir a operação.' });
   });
+  if (options.saas) registerSaas(app, store, options.saas);
+  app.get('/api/auth/config', async () =>
+    options.saas
+      ? { mode: 'saas', url: options.saas.url, anonKey: options.saas.anonKey }
+      : { mode: 'personal' },
+  );
   app.get('/healthz', async () => {
-    await store.query('SELECT 1');
+    await store.ping();
     return { status: 'ok' };
   });
   app.get('/api/health', async () => ({
     status: 'ok',
-    database: (await store.query('SELECT 1 AS ok')).rows[0],
-    schemaVersion: 1,
+    database: await store.ping(),
+    schemaVersion: options.saas ? 2 : 1,
   }));
   app.get('/api/profiles', () => store.profiles());
-  app.post('/api/profiles', async (req, reply) =>
-    reply.code(201).send(await store.createProfile(profileInputSchema.parse(req.body))),
-  );
+  app.post('/api/profiles', async (req, reply) => {
+    reply.code(201);
+    return store.createProfile(profileInputSchema.parse(req.body));
+  });
   app.put('/api/profiles/:id', (req) =>
     store.updateProfile(id(req), profileInputSchema.parse(req.body)),
   );
   app.delete('/api/profiles/:id', async (req, reply) => {
     await store.deleteProfile(id(req));
-    return reply.code(204).send();
+    reply.code(204);
+    return;
   });
   const profileQuery = (q: unknown) =>
     z.object({ profileId: idSchema.optional() }).strict().parse(q).profileId;
   app.get('/api/assets', (req) => store.assets(profileQuery(req.query)));
   app.get('/api/assets/:id', (req) => store.asset(id(req)));
-  app.post('/api/assets', async (req, reply) =>
-    reply.code(201).send(await store.createAsset(assetInputSchema.parse(req.body))),
-  );
+  app.post('/api/assets', async (req, reply) => {
+    reply.code(201);
+    return store.createAsset(assetInputSchema.parse(req.body));
+  });
   app.put('/api/assets/:id', (req) =>
     store.updateAsset(id(req), assetUpdateSchema.parse(req.body)),
   );
   app.delete('/api/assets/:id', async (req, reply) => {
     await store.deleteAsset(id(req));
-    return reply.code(204).send();
+    reply.code(204);
+    return;
   });
-  app.post('/api/assets/:id/duplicate', async (req, reply) =>
-    reply.code(201).send(await store.duplicateAsset(id(req))),
-  );
+  app.post('/api/assets/:id/duplicate', async (req, reply) => {
+    reply.code(201);
+    return store.duplicateAsset(id(req));
+  });
   app.get('/api/assets/:id/revisions', (req) => store.revisions(id(req)));
   app.post('/api/assets/:id/restore', (req) => {
     const b = z
@@ -138,16 +163,19 @@ export function createApp(
     return store.restoreRevision(id(req), b.revisionId, b.version);
   });
   app.get('/api/templates', (req) => store.templates(profileQuery(req.query)));
-  app.post('/api/templates', async (req, reply) =>
-    reply.code(201).send(await store.createTemplate(templateInputSchema.parse(req.body))),
-  );
+  app.post('/api/templates', async (req, reply) => {
+    reply.code(201);
+    return store.createTemplate(templateInputSchema.parse(req.body));
+  });
   app.delete('/api/templates/:id', async (req, reply) => {
     await store.deleteTemplate(id(req));
-    return reply.code(204).send();
+    reply.code(204);
+    return;
   });
-  app.post('/api/templates/:id/duplicate', async (req, reply) =>
-    reply.code(201).send(await store.duplicateTemplate(id(req))),
-  );
+  app.post('/api/templates/:id/duplicate', async (req, reply) => {
+    reply.code(201);
+    return store.duplicateTemplate(id(req));
+  });
   app.put('/api/templates/:id', (req) =>
     store.updateTemplate(id(req), templateInputSchema.omit({ profileId: true }).parse(req.body)),
   );
@@ -160,13 +188,13 @@ export function createApp(
     const b = mediaInputSchema.parse(req.body);
     await store.profile(b.profileId);
     const n = await normalizeImage(b.data);
-    return reply
-      .code(201)
-      .send(await store.addMedia(b.profileId, b.name, n.bytes, n.width, n.height));
+    reply.code(201);
+    return store.addMedia(b.profileId, b.name, n.bytes, n.width, n.height);
   });
   app.delete('/api/media/:id', async (req, reply) => {
     await store.deleteMedia(id(req));
-    return reply.code(204).send();
+    reply.code(204);
+    return;
   });
   app.get('/api/backup', async () => {
     const b = await store.backup();
@@ -194,16 +222,15 @@ export function createApp(
       .object({ profileId: idSchema, name: z.string().trim().min(1).max(100), config: z.unknown() })
       .strict()
       .parse(req.body);
-    return reply.code(201).send(
-      await store.createAsset({
-        profileId: b.profileId,
-        name: b.name,
-        platformId: 'banner',
-        document: migrateLegacy(b.config),
-        tags: ['Importado'],
-        favorite: false,
-      }),
-    );
+    reply.code(201);
+    return store.createAsset({
+      profileId: b.profileId,
+      name: b.name,
+      platformId: 'banner',
+      document: migrateLegacy(b.config),
+      tags: ['Importado'],
+      favorite: false,
+    });
   });
   if (options.serveStatic !== false && existsSync(resolve('dist/index.html'))) {
     app.register(fastifyStatic, { root: resolve('dist') });

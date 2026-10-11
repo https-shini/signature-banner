@@ -1,6 +1,7 @@
 import { Pool, type PoolClient } from 'pg';
 import { readFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import {
   assetInputSchema,
   assetSchema,
@@ -43,7 +44,121 @@ const validators = {
   media: mediaSchema.omit({ data: true }),
   revisions: revisionSchema,
 };
+type TenantContext = {
+  client: PoolClient;
+  userId: string;
+  workspaceId?: string;
+  projectId?: string;
+  storage: ImageStorage;
+  uploaded: string[];
+  cleanupStage: boolean;
+  cleanupRequested: boolean;
+};
 export class Store {
+  private tenant = new AsyncLocalStorage<TenantContext>();
+  private saas = false;
+  async withTenant<T>(
+    actor: Omit<TenantContext, 'client' | 'uploaded' | 'cleanupStage' | 'cleanupRequested'>,
+    fn: () => Promise<T>,
+  ): Promise<T> {
+    if (!this.saas) throw new Error('SaaS não habilitado.');
+    const client = await this.pool.connect();
+    const context: TenantContext = {
+      ...actor,
+      client,
+      uploaded: [],
+      cleanupStage: false,
+      cleanupRequested: !!actor.workspaceId,
+    };
+    const begin = async () => {
+      await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ');
+      await client.query('SET LOCAL ROLE authenticated');
+      const role = await client.query(
+        'SELECT rolsuper,rolbypassrls FROM pg_roles WHERE rolname=current_user',
+      );
+      if (role.rows[0].rolsuper || role.rows[0].rolbypassrls)
+        throw new Error('Papel privilegiado recusado.');
+      await client.query(
+        "SELECT set_config('request.jwt.claims',$1,true),set_config('app.workspace_id',$2,true),set_config('app.project_id',$3,true)",
+        [
+          JSON.stringify({ sub: actor.userId, role: 'authenticated' }),
+          actor.workspaceId ?? '',
+          actor.projectId ?? '',
+        ],
+      );
+    };
+    let committed = false,
+      commitAttempted = false,
+      broken = false;
+    try {
+      await begin();
+      const value = await this.tenant.run(context, fn);
+      commitAttempted = true;
+      await client.query('COMMIT');
+      committed = true;
+      if (context.cleanupRequested) {
+        context.cleanupStage = true;
+        try {
+          await begin();
+          await this.tenant.run(context, () => this.collectStorage());
+          await client.query('COMMIT');
+        } catch {
+          await client.query('ROLLBACK');
+        }
+      }
+      return value;
+    } catch (error) {
+      await client.query('ROLLBACK').catch(() => {
+        broken = true;
+      });
+      // A lost COMMIT acknowledgement is ambiguous: preserve objects rather than delete committed media.
+      if (!committed && !commitAttempted && !broken && context.uploaded.length) {
+        try {
+          await actor.storage.remove(context.uploaded);
+        } catch {
+          // Persist compensation if Storage is temporarily unavailable after rollback.
+          try {
+            await begin();
+            await this.tenant.run(context, async () => {
+              for (const path of context.uploaded)
+                await this.query(
+                  `INSERT INTO ${this.schema}.storage_cleanup(path) VALUES($1) ON CONFLICT DO NOTHING`,
+                  [path],
+                );
+            });
+            await client.query('COMMIT');
+          } catch {
+            await client.query('ROLLBACK');
+          }
+        }
+      }
+      throw error;
+    } finally {
+      client.release(broken);
+    }
+  }
+  /** Startup verifies an explicitly provisioned foundation; never migrates automatically. */
+  async enableSaas() {
+    const versions = await this.query(
+      `SELECT version FROM ${this.schema}.schema_migrations WHERE version=2`,
+    );
+    if (!versions.rows.length)
+      throw new Error('Aplique a migração SaaS explicitamente no ambiente autorizado.');
+    this.saas = true;
+  }
+  private imageStorage(): ImageStorage {
+    const scope = this.tenant.getStore();
+    if (!scope) return this.storage;
+    return {
+      get: (path) => scope.storage.get(path),
+      remove: (paths) => scope.storage.remove(paths),
+      put: async (path, bytes) => {
+        await scope.storage.put(path, bytes);
+        scope.uploaded.push(path);
+      },
+    };
+  }
+
   private constructor(
     readonly pool: Pool,
     readonly storage: ImageStorage,
@@ -57,6 +172,8 @@ export class Store {
     ssl = false,
     sslCa,
     seed = true,
+    maxSchemaVersion = 1,
+    provision = true,
   }: {
     connectionString: string;
     storage: ImageStorage;
@@ -64,6 +181,8 @@ export class Store {
     ssl?: boolean;
     sslCa?: string;
     seed?: boolean;
+    maxSchemaVersion?: 1 | 2;
+    provision?: boolean;
   }) {
     if (!/^[a-z][a-z0-9_]{0,50}$/.test(schema)) throw new Error('Schema inválido.');
     const connection = new URL(connectionString);
@@ -77,6 +196,14 @@ export class Store {
     });
     const s = new Store(pool, storage, schema);
     try {
+      if (!provision) {
+        const versions = await s.query(
+          `SELECT max(version) AS version FROM ${schema}.schema_migrations`,
+        );
+        if (versions.rows[0].version !== maxSchemaVersion)
+          throw new Error('Schema não provisionado ou versão incompatível.');
+        return s;
+      }
       await s.transaction(async (tx) => {
         await tx.query('SELECT pg_advisory_xact_lock(hashtext($1))', [schema]);
         const namespace = await tx.query(
@@ -91,7 +218,7 @@ export class Store {
         const existing = await tx.query(
           `SELECT version FROM ${schema}.schema_migrations ORDER BY version DESC LIMIT 1`,
         );
-        if ((existing.rows[0]?.version ?? 0) > 1)
+        if ((existing.rows[0]?.version ?? 0) > maxSchemaVersion)
           throw new Error('Banco de dados mais recente que esta aplicação.');
         if (!existing.rows.length) {
           const sql = await readFile(
@@ -133,13 +260,19 @@ export class Store {
     }
   }
   query(sql: string, params: unknown[] = []) {
-    return (this.client ?? this.pool).query(sql, params);
+    const context = this.tenant.getStore();
+    if (this.saas && !context && !this.client)
+      throw new Error('Operação SaaS exige uma sessão individual.');
+    return (this.client ?? context?.client ?? this.pool).query(sql, params);
+  }
+  async ping() {
+    return (await this.pool.query('SELECT 1 AS ok')).rows[0];
   }
   async close() {
     if (!this.client) await this.pool.end();
   }
   async transaction<T>(fn: (tx: Store) => Promise<T>): Promise<T> {
-    if (this.client) return fn(this);
+    if (this.client || this.tenant.getStore()) return fn(this);
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -182,7 +315,7 @@ export class Store {
       fail(400, 'Um novo perfil deve começar sem imagens de outro contexto.');
     const now = new Date().toISOString(),
       p: Profile = { ...input, id: randomUUID(), createdAt: now, updatedAt: now };
-    await this.query(`INSERT INTO ${this.schema}.profiles VALUES ($1,$2)`, [p.id, p]);
+    await this.query(`INSERT INTO ${this.schema}.profiles (id,payload) VALUES ($1,$2)`, [p.id, p]);
     return p;
   }
   async updateProfile(id: string, input: ProfileInput) {
@@ -201,7 +334,7 @@ export class Store {
       const paths = images.map((m) => tx.imagePath(m));
       for (const path of paths)
         await tx.query(
-          `INSERT INTO ${this.schema}.storage_cleanup VALUES ($1) ON CONFLICT DO NOTHING`,
+          `INSERT INTO ${this.schema}.storage_cleanup (path) VALUES ($1) ON CONFLICT DO NOTHING`,
           [path],
         );
       await tx.query(`DELETE FROM ${this.schema}.profiles WHERE id=$1`, [id]);
@@ -232,12 +365,10 @@ export class Store {
       snapshot: a,
       createdAt: a.updatedAt,
     };
-    await this.query(`INSERT INTO ${this.schema}.revisions VALUES ($1,$2,$3,$4)`, [
-      r.id,
-      a.id,
-      a.version,
-      r,
-    ]);
+    await this.query(
+      `INSERT INTO ${this.schema}.revisions (id,asset_id,version,payload) VALUES ($1,$2,$3,$4)`,
+      [r.id, a.id, a.version, r],
+    );
   }
   async createAsset(value: AssetInput) {
     const input = assetInputSchema.parse(value);
@@ -252,7 +383,10 @@ export class Store {
           createdAt: now,
           updatedAt: now,
         };
-      await tx.query(`INSERT INTO ${this.schema}.assets VALUES ($1,$2,$3)`, [a.id, a.profileId, a]);
+      await tx.query(
+        `INSERT INTO ${this.schema}.assets (id,profile_id,payload) VALUES ($1,$2,$3)`,
+        [a.id, a.profileId, a],
+      );
       await tx.revision(a);
       return a;
     });
@@ -324,11 +458,10 @@ export class Store {
     return this.transaction(async (tx) => {
       await tx.validateImages(input.profileId, input.document);
       const t: Template = { ...input, id: randomUUID(), createdAt: new Date().toISOString() };
-      await tx.query(`INSERT INTO ${this.schema}.templates VALUES ($1,$2,$3)`, [
-        t.id,
-        t.profileId,
-        t,
-      ]);
+      await tx.query(
+        `INSERT INTO ${this.schema}.templates (id,profile_id,payload) VALUES ($1,$2,$3)`,
+        [t.id, t.profileId, t],
+      );
       return t;
     });
   }
@@ -361,10 +494,12 @@ export class Store {
     return this.one<Media>('media', id);
   }
   private imagePath(m: Media) {
-    return `${m.profileId}/${m.id}.png`;
+    const workspace = this.tenant.getStore()?.workspaceId;
+    if (this.saas && !workspace) fail(400, 'Escolha um workspace.');
+    return `${workspace ? workspace + '/' : ''}${m.profileId}/${m.id}.png`;
   }
   async mediaData(id: string) {
-    return this.storage.get(this.imagePath(await this.media(id)));
+    return this.imageStorage().get(this.imagePath(await this.media(id)));
   }
   async addMedia(profileId: string, name: string, bytes: Buffer, width: number, height: number) {
     await this.profile(profileId);
@@ -378,13 +513,12 @@ export class Store {
         createdAt: new Date().toISOString(),
       },
       path = this.imagePath(m);
-    await this.storage.put(path, bytes);
+    await this.imageStorage().put(path, bytes);
     try {
-      await this.query(`INSERT INTO ${this.schema}.media VALUES ($1,$2,$3)`, [
-        m.id,
-        m.profileId,
-        m,
-      ]);
+      await this.query(
+        `INSERT INTO ${this.schema}.media (id,profile_id,payload) VALUES ($1,$2,$3)`,
+        [m.id, m.profileId, m],
+      );
       return m;
     } catch (e) {
       await this.cleanupPaths([path]);
@@ -392,25 +526,33 @@ export class Store {
     }
   }
   private async cleanupPaths(paths: string[]) {
+    if (this.tenant.getStore()) return;
     for (const path of paths)
       await this.query(
-        `INSERT INTO ${this.schema}.storage_cleanup VALUES ($1) ON CONFLICT DO NOTHING`,
+        `INSERT INTO ${this.schema}.storage_cleanup (path) VALUES ($1) ON CONFLICT DO NOTHING`,
         [path],
       );
     await this.collectStorage().catch(() => undefined);
   }
   async collectStorage() {
+    const scope = this.tenant.getStore();
+    if (scope && !scope.cleanupStage) {
+      scope.cleanupRequested = true;
+      return;
+    }
     const paths = (
       await this.query(`SELECT path FROM ${this.schema}.storage_cleanup LIMIT 100`)
     ).rows.map((r) => r.path as string);
     if (!paths.length) return;
-    await this.storage.remove(paths);
+    await this.imageStorage().remove(paths);
     await this.query(`DELETE FROM ${this.schema}.storage_cleanup WHERE path=ANY($1::text[])`, [
       paths,
     ]);
   }
   async deleteMedia(id: string) {
     await this.transaction(async (tx) => {
+      const scope = this.tenant.getStore();
+      if (scope) await tx.query("SELECT set_config('app.project_id','',true)");
       const m = await tx.one<Media>('media', id, true),
         uses = (d: AssetDocument) =>
           d.photoId === id || d.logoId === id || d.backgroundImageId === id;
@@ -422,7 +564,7 @@ export class Store {
       )
         fail(409, 'Imagem usada pela identidade, por ativos, modelos ou histórico.');
       await tx.query(
-        `INSERT INTO ${this.schema}.storage_cleanup VALUES ($1) ON CONFLICT DO NOTHING`,
+        `INSERT INTO ${this.schema}.storage_cleanup (path) VALUES ($1) ON CONFLICT DO NOTHING`,
         [tx.imagePath(m)],
       );
       await tx.query(`DELETE FROM ${this.schema}.media WHERE id=$1`, [id]);
@@ -461,18 +603,17 @@ export class Store {
           createdAt: new Date().toISOString(),
         };
         const path = this.imagePath(m);
-        await this.storage.put(path, n!.bytes);
+        await this.imageStorage().put(path, n!.bytes);
         uploaded.push(path);
         images.push(m);
       }
       return await this.transaction(async (tx) => {
         await tx.one<Profile>('profiles', profileId, true);
         for (const m of images)
-          await tx.query(`INSERT INTO ${this.schema}.media VALUES ($1,$2,$3)`, [
-            m.id,
-            profileId,
-            m,
-          ]);
+          await tx.query(
+            `INSERT INTO ${this.schema}.media (id,profile_id,payload) VALUES ($1,$2,$3)`,
+            [m.id, profileId, m],
+          );
         const input = { profileId, name: source.name, platformId: source.platformId, document };
         return source.kind === 'template'
           ? { kind: 'template' as const, record: await tx.createTemplate(input) }
@@ -488,7 +629,8 @@ export class Store {
   }
   async backup(): Promise<Backup> {
     return this.transaction(async (tx) => {
-      await tx.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+      if (!this.tenant.getStore())
+        await tx.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
       const profiles = await tx.profiles(),
         assets = await tx.assets(),
         templates = await tx.templates(),
@@ -609,37 +751,35 @@ export class Store {
     try {
       for (const m of mappedMedia) {
         const path = this.imagePath(m.metadata);
-        await this.storage.put(path, m.bytes);
+        await this.imageStorage().put(path, m.bytes);
         uploaded.push(path);
       }
       return await this.transaction(async (tx) => {
         for (const p of mappedProfiles)
-          await tx.query(`INSERT INTO ${this.schema}.profiles VALUES ($1,$2)`, [p.id, p]);
+          await tx.query(`INSERT INTO ${this.schema}.profiles (id,payload) VALUES ($1,$2)`, [
+            p.id,
+            p,
+          ]);
         for (const m of mappedMedia)
-          await tx.query(`INSERT INTO ${this.schema}.media VALUES ($1,$2,$3)`, [
-            m.metadata.id,
-            m.metadata.profileId,
-            m.metadata,
-          ]);
+          await tx.query(
+            `INSERT INTO ${this.schema}.media (id,profile_id,payload) VALUES ($1,$2,$3)`,
+            [m.metadata.id, m.metadata.profileId, m.metadata],
+          );
         for (const a of mappedAssets)
-          await tx.query(`INSERT INTO ${this.schema}.assets VALUES ($1,$2,$3)`, [
-            a.id,
-            a.profileId,
-            a,
-          ]);
+          await tx.query(
+            `INSERT INTO ${this.schema}.assets (id,profile_id,payload) VALUES ($1,$2,$3)`,
+            [a.id, a.profileId, a],
+          );
         for (const t of mappedTemplates)
-          await tx.query(`INSERT INTO ${this.schema}.templates VALUES ($1,$2,$3)`, [
-            t.id,
-            t.profileId,
-            t,
-          ]);
+          await tx.query(
+            `INSERT INTO ${this.schema}.templates (id,profile_id,payload) VALUES ($1,$2,$3)`,
+            [t.id, t.profileId, t],
+          );
         for (const r of mappedRevisions)
-          await tx.query(`INSERT INTO ${this.schema}.revisions VALUES ($1,$2,$3,$4)`, [
-            r.id,
-            r.assetId,
-            r.version,
-            r,
-          ]);
+          await tx.query(
+            `INSERT INTO ${this.schema}.revisions (id,asset_id,version,payload) VALUES ($1,$2,$3,$4)`,
+            [r.id, r.assetId, r.version, r],
+          );
         return {
           profiles: mappedProfiles.length,
           assets: mappedAssets.length,

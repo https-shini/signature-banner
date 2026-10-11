@@ -12,9 +12,11 @@ export class SupabaseStorage implements ImageStorage {
     url: string,
     key: string,
     private bucket: string,
+    accessToken?: string,
   ) {
     this.client = createClient(url, key, {
       auth: { persistSession: false, autoRefreshToken: false },
+      ...(accessToken ? { global: { headers: { Authorization: `Bearer ${accessToken}` } } } : {}),
     });
   }
   async initialize() {
@@ -60,7 +62,8 @@ export class SupabaseStorage implements ImageStorage {
 export class LocalStorage implements ImageStorage {
   constructor(private root: string) {}
   private location(path: string) {
-    if (!/^[\da-f-]+\/[\da-f-]+\.png$/.test(path)) throw new Error('Caminho de imagem inválido.');
+    if (!/^[\da-f-]+\/(?:[\da-f-]+\/)?[\da-f-]+\.png$/.test(path))
+      throw new Error('Caminho de imagem inválido.');
     return resolve(this.root, path);
   }
   async put(path: string, bytes: Buffer) {
