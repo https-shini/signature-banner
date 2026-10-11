@@ -19,6 +19,8 @@ services:
         value: supabase
       - key: DATABASE_SSL
         value: 'true'
+      - key: DATABASE_SSL_CA_FILE
+        value: server/certs/supabase-prod-ca-2021.crt
       - key: APP_ACCESS_TOKEN
         generateValue: true
       - key: DATABASE_URL

@@ -20,17 +20,18 @@ O serviço Render `identify` (`srv-db5j9t3bc2fs7393moug`) foi criado no plano Fr
 
 ## Variáveis do backend
 
-| Variável                                  | Finalidade                                                                 |
-| ----------------------------------------- | -------------------------------------------------------------------------- |
-| `NODE_ENV=production`                     | Ativa exigências de segurança/persistência                                 |
-| `HOST=0.0.0.0` e `PORT` da Render         | Escuta compatível com o serviço                                            |
-| `DATABASE_URL`                            | Conexão PostgreSQL do Supabase; prefira Session Pooler compatível com IPv4 |
-| `DATABASE_SSL=true`                       | TLS com verificação de certificado                                         |
-| `SUPABASE_URL`                            | URL do projeto reutilizado                                                 |
-| `SUPABASE_SERVICE_ROLE_KEY`               | Credencial privilegiada de Storage, só no backend                          |
-| `SUPABASE_STORAGE_BUCKET=identity-studio` | Nome do bucket privado                                                     |
-| `STORAGE_DRIVER=supabase`                 | Impede persistência acidental em disco efêmero                             |
-| `APP_ACCESS_TOKEN`                        | Chave pessoal aleatória de ao menos 32 caracteres; Blueprint gera o valor  |
+| Variável                                  | Finalidade                                                                                                    |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV=production`                     | Ativa exigências de segurança/persistência                                                                    |
+| `HOST=0.0.0.0` e `PORT` da Render         | Escuta compatível com o serviço                                                                               |
+| `DATABASE_URL`                            | Conexão PostgreSQL do Supabase; prefira Session Pooler compatível com IPv4                                    |
+| `DATABASE_SSL_CA_FILE`                    | CA oficial PostgreSQL, limitada à conexão SQL; Blueprint aponta para `server/certs/supabase-prod-ca-2021.crt` |
+| `DATABASE_SSL=true`                       | TLS com verificação de certificado                                                                            |
+| `SUPABASE_URL`                            | URL do projeto reutilizado                                                                                    |
+| `SUPABASE_SERVICE_ROLE_KEY`               | Credencial privilegiada de Storage, só no backend                                                             |
+| `SUPABASE_STORAGE_BUCKET=identity-studio` | Nome do bucket privado                                                                                        |
+| `STORAGE_DRIVER=supabase`                 | Impede persistência acidental em disco efêmero                                                                |
+| `APP_ACCESS_TOKEN`                        | Chave pessoal aleatória de ao menos 32 caracteres; Blueprint gera o valor                                     |
 
 Cadastre segredos nos mecanismos seguros do serviço, nunca em Git, logs, frontend ou mensagens. A chave pessoal é informada na tela de login e mantida em `sessionStorage`. Para uma conta multiusuário, será necessário Supabase Auth e autorização por proprietário; a versão atual é pessoal.
 
@@ -38,7 +39,7 @@ Cadastre segredos nos mecanismos seguros do serviço, nunca em Git, logs, fronte
 
 A conexão SQL cria apenas o schema `identity_studio`. A migration `server/migrations/001_initial.sql` é versionada e executada com transação/advisory lock no startup. Revise a conexão para garantir que pertence ao projeto correto. Não há reset, remoção de schemas alheios ou alterações de tabelas existentes.
 
-O usuário SQL `identify_backend` possui apenas o schema `identity_studio`, sem privilégios de superusuário, criação de bancos ou criação de roles. Sua credencial é configurada separadamente das migrations e não deve ser registrada nelas. RLS fica habilitado em todas as tabelas. Não crie políticas de acesso anônimo, não exponha esse schema no Data API e mantenha a conexão privilegiada somente no servidor. Use uma conexão suportada pelo Supabase com verificação TLS; não desative a validação de certificados para contornar falhas.
+O usuário SQL `identify_backend` possui apenas o schema `identity_studio`, sem privilégios de superusuário, criação de bancos ou criação de roles. Sua credencial é configurada separadamente das migrations e não deve ser registrada nelas. RLS fica habilitado em todas as tabelas. Não crie políticas de acesso anônimo, não exponha esse schema no Data API e mantenha a conexão privilegiada somente no servidor. A CA pública oficial é versionada em `server/certs/`, com origem, fingerprint e validade documentadas. `DATABASE_SSL_CA_FILE` fornece essa CA ao driver PostgreSQL sem alterar a confiança global do sistema. Use uma conexão suportada pelo Supabase com verificação TLS; não desative a validação de certificados para contornar falhas.
 
 O adaptador verifica o bucket configurado antes de criar um novo. O bucket precisa ser **privado**, aceitar apenas PNG normalizado e ter limite de 5 MB por objeto. Objetos são identificados por `<perfil>/<imagem>.png`; nenhuma URL pública é necessária. Ao reutilizar um projeto, confira a capacidade e os objetos existentes antes de escolher o bucket. A API autenticada lê os objetos pelo backend.
 

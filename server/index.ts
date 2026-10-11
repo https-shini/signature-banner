@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { resolve } from 'node:path';
+import { readFile } from 'node:fs/promises';
 import { Store } from './store';
 import { createApp } from './app';
 import { LocalStorage, SupabaseStorage, type ImageStorage } from './storage';
@@ -39,6 +40,9 @@ const store = await Store.open({
   connectionString,
   storage,
   ssl: production || process.env.DATABASE_SSL === 'true',
+  sslCa: process.env.DATABASE_SSL_CA_FILE
+    ? await readFile(resolve(process.env.DATABASE_SSL_CA_FILE), 'utf8')
+    : undefined,
 });
 await store
   .collectStorage()

@@ -54,12 +54,14 @@ export class Store {
     storage,
     schema = 'identity_studio',
     ssl = false,
+    sslCa,
     seed = true,
   }: {
     connectionString: string;
     storage: ImageStorage;
     schema?: string;
     ssl?: boolean;
+    sslCa?: string;
     seed?: boolean;
   }) {
     if (!/^[a-z][a-z0-9_]{0,50}$/.test(schema)) throw new Error('Schema inválido.');
@@ -67,7 +69,7 @@ export class Store {
     connection.searchParams.delete('sslmode');
     const pool = new Pool({
       connectionString: connection.toString(),
-      ssl: ssl ? { rejectUnauthorized: true } : false,
+      ssl: ssl ? { rejectUnauthorized: true, ...(sslCa ? { ca: sslCa } : {}) } : false,
       max: 4,
       connectionTimeoutMillis: 10000,
       statement_timeout: 15000,
