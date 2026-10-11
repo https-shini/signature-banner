@@ -13,6 +13,10 @@ Central pessoal de identidade visual: gerencie banners, assinaturas de e-mail e 
 
 Leia o [diagnóstico e as decisões](docs/ARCHITECTURE.md), o [guia de desenvolvimento](docs/DEVELOPMENT.md) e o [guia de implantação](docs/DEPLOYMENT.md).
 
+## Interface e design system
+
+A interface usa o sistema [Aurora / Liquid Glass](docs/liquid-glass/README.md), com tokens e componentes compartilhados. Consulte as [evidências de validação](docs/liquid-glass/VALIDATION.md) e as capturas antes/depois.
+
 ## Desenvolvimento
 
 Requer Node **24**, npm e PostgreSQL **17**. Docker é uma opção para o banco local.
@@ -49,6 +53,7 @@ Com o PostgreSQL local ativo:
 npm run build
 npm test
 CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e
+npm run test:visual
 npm audit --audit-level=moderate
 ```
 
