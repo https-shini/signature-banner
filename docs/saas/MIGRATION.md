@@ -24,9 +24,9 @@ Antes de qualquer atribuição, o backup preserva a versão anterior. Depois de 
 
 ## Pendências externas reais
 
-A configuração Auth inicialmente respondeu 403 por ausência dos escopos `auth:read`/`auth:write` no OAuth MCP. Esse acesso foi resolvido por credencial administrativa protegida fornecida pelo usuário. Site URL e redirects de produção foram corrigidos e confirmados. O SMTP próprio continua ausente; o envio padrão foi aceito e recebido em um teste autorizado, mas não valida cadastro público ou recuperação PKCE completa. Não ativar SaaS sem:
+A configuração Auth inicialmente respondeu 403 por ausência dos escopos `auth:read`/`auth:write` no OAuth MCP. Esse acesso foi resolvido por credencial administrativa protegida fornecida pelo usuário. Site URL e redirects de produção foram corrigidos e confirmados. O SMTP pessoal Gmail foi salvo e entregou uma mensagem real, mas os cabeçalhos comprovam DMARC fail: SPF passa para o envelope gmail.com, sem alinhamento com o From gcruz.dev.br nem assinatura DKIM padrão desse domínio. O remetente no-reply@gcruz.dev.br foi preservado; a correção depende do transporte autenticar esse domínio. Não tratar variáveis presentes ou entrega como prova de autenticação do remetente. Não ativar SaaS sem:
 
-- SMTP adequado, remetente autorizado e confirmação/recuperação testadas, respeitando limites do provedor.
+- SMTP adequado, remetente autorizado com SPF/DKIM alinhado e DMARC aprovado nos cabeçalhos recebidos, além de confirmação/recuperação testadas, respeitando limites do provedor. O limite configurado permanece em dois e-mails por hora; revisar capacidade depois de corrigir a autenticação do domínio.
 - Redirects exatos para origem publicada e `/auth/callback`, incluindo `/auth/callback?intent=recovery`, e política de confirmação revisada.
 - `AUTH_MODE=saas`, URL e chave anon públicas verificadas, DATABASE_URL de login restrito, TLS/CA válidos e `STORAGE_DRIVER=supabase`; bucket padrão `identify-workspaces`.
 - Backup verificável e migração explicitamente autorizada. O legado pode permanecer sem associação durante a ativação de contas novas, conforme a instrução de ativação controlada; seus registros ficam preservados e invisíveis. Para associá-lo, exigir confirmação explícita do proprietário e manifesto revisado.
