@@ -24,12 +24,12 @@ Antes de qualquer atribuição, o backup preserva a versão anterior. Depois de 
 
 ## Pendências externas reais
 
-A API autenticada de configuração de Auth respondeu 403 nesta execução; não foi confirmado SMTP ou redirects de produção. Não ativar SaaS sem:
+A configuração Auth inicialmente respondeu 403 por ausência dos escopos `auth:read`/`auth:write` no OAuth MCP. Esse acesso foi resolvido por credencial administrativa protegida fornecida pelo usuário. Site URL e redirects de produção foram corrigidos e confirmados. O SMTP próprio continua ausente; o envio padrão foi aceito e recebido em um teste autorizado, mas não valida cadastro público ou recuperação PKCE completa. Não ativar SaaS sem:
 
 - SMTP adequado, remetente autorizado e confirmação/recuperação testadas, respeitando limites do provedor.
 - Redirects exatos para origem publicada e `/auth/callback`, incluindo `/auth/callback?intent=recovery`, e política de confirmação revisada.
 - `AUTH_MODE=saas`, URL e chave anon públicas verificadas, DATABASE_URL de login restrito, TLS/CA válidos e `STORAGE_DRIVER=supabase`; bucket padrão `identify-workspaces`.
-- Backup verificável, migração explicitamente autorizada e decisão de proprietário do legado.
+- Backup verificável e migração explicitamente autorizada. O legado pode permanecer sem associação durante a ativação de contas novas, conforme a instrução de ativação controlada; seus registros ficam preservados e invisíveis. Para associá-lo, exigir confirmação explícita do proprietário e manifesto revisado.
 - CI e testes isolados aprovados; saúde e fluxos reais após ativação.
 
 Não solicitar senhas/tokens no chat. Configuração e aprovação devem usar os mecanismos oficiais das plataformas. O relatório distingue implementação em main de ativação em produção.

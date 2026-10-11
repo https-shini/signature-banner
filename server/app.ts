@@ -31,7 +31,20 @@ export function createApp(
 ) {
   const app = Fastify({
     logger: options.logger
-      ? { redact: ['req.headers.authorization', 'req.headers.cookie'] }
+      ? {
+          redact: ['req.headers.authorization', 'req.headers.cookie'],
+          serializers: {
+            req(request) {
+              return {
+                method: request.method,
+                url: request.url?.split('?')[0],
+                hostname: request.hostname,
+                remoteAddress: request.ip,
+                remotePort: request.raw?.socket?.remotePort,
+              };
+            },
+          },
+        }
       : false,
     bodyLimit: 24 * 1024 * 1024,
   });
@@ -238,6 +251,11 @@ export function createApp(
       req.url.startsWith('/api/')
         ? reply.code(404).send({ message: 'Rota não encontrada.' })
         : reply.sendFile('index.html'),
+    );
+  } else {
+    // Fastify's default 404 log includes the original URL and its query string.
+    app.setNotFoundHandler((_req, reply) =>
+      reply.code(404).send({ message: 'Rota não encontrada.' }),
     );
   }
   return app;

@@ -6,7 +6,7 @@ Branch principal `main`, commit inicial `5a1e3d1ae939005fe948650749245723c2275ca
 
 APIs oficiais autenticadas de GitHub, Render e Supabase foram reutilizadas. Render: serviço existente ativo, main, autodeploy desativado. Supabase: ACTIVE_HEALTHY; consulta somente leitura confirmou schema 1, um perfil, três materiais e zero imagens. As exclusões legítimas anteriores foram preservadas. Nenhuma conta de teste, migração ou escrita SaaS em produção.
 
-A configuração de Auth continua inacessível pela autorização disponível (HTTP 403). SMTP e redirects de produção não foram verificados. MagicPath e conectores nativos não estão expostos nesta sessão; nenhum código externo foi importado sem revisão.
+O HTTP 403 foi diagnosticado: o OAuth do MCP não oferece `auth:read`/`auth:write`, exigidos para configuração Auth. Na ativação controlada, uma credencial administrativa disponibilizada pelo usuário em grupo protegido da Render permitiu GET/PATCH oficiais, ambos verificados. Site URL e redirects foram corrigidos para a origem de produção e os callbacks implementados, preservando confirmação obrigatória. Não existe SMTP próprio; o serviço padrão tem limite de dois e-mails por hora. Uma solicitação real de cadastro foi aceita e o usuário confirmou recebimento, o que não comprova adequação para cadastro público ou recuperação completa. MagicPath e conectores nativos continuam indisponíveis; APIs oficiais foram utilizadas.
 
 ## Implementado
 
@@ -20,12 +20,21 @@ A configuração de Auth continua inacessível pela autorização disponível (H
 
 ## Verificado localmente
 
-- Build e tipagem estrita aprovados; 29 testes de API/domínio/configuração e quatro testes OAuth passaram.
+- Build e tipagem estrita aprovados; 30 testes de API/domínio/configuração/logging passaram após a correção necessária do registro de callbacks. Os quatro testes OAuth anteriores permanecem como baseline; a CI executa a suíte completa no commit novo.
 - Oito grupos SaaS com duas contas reais: Auth, RLS, REST direto, Storage, manipulação de IDs/metadata/membresia, concorrência e pool, migração e e-mail/redefinição reais no ambiente isolado.
 - Seis fluxos SaaS no Chromium: onboarding, workspaces/projetos, assinatura, upload, persistência, PNG 1200×320, rascunhos, contexto, segunda conta, conta/logout/login e callback PKCE, incluindo link consumido. Zero pageerrors; audits AA desktop/mobile sem violações.
 - 16 fluxos existentes de navegador preservados; nenhuma requisição externa ou erro de console nessa experiência.
 - Suíte visual: 40 capturas/audits, 16 verificações de navegação/preferências/recuperação; zero violações, overflow ou erros.
 - npm audit: zero vulnerabilidades. Não há lint separado configurado; TypeScript estrito e verificações de formato/diff complementam os testes.
+- O logger real foi testado em processo separado: antes da correção, registrava código e estado OAuth fictícios na URL; depois, preserva método, caminho e status sem query, Authorization ou Cookie. O handler 404 também evita a mensagem padrão que repetia a URL completa.
+
+## Backup e ensaio da ativação
+
+A conexão PostgreSQL direta deste ambiente foi recusada. A alternativa autorizada foi um snapshot atômico de dados e catálogo pela Management API em modo somente leitura. O backup SQL reconstruído preserva as oito tabelas, IDs, payloads, constraints, índices, proprietários e RLS; ACLs e configuração externa foram inventariados separadamente. Não se trata de um pg_dump completo do projeto Supabase.
+
+Cinco verificações passaram no banco isolado: restauração exata, equivalência do backup da aplicação, migration 002 idempotente preservando o legado, dados não atribuídos invisíveis ao papel authenticated e retorno operacional à versão 1 mantendo o delta da versão 2 em outro schema. O inventário de Storage tinha zero objetos, portanto não havia bytes de imagens para copiar ou restaurar. Backups e credenciais estão em arquivos privados fora do repositório. Antes do cutover, atualizar e comparar o snapshot com o estado corrente.
+
+A administração SQL possui CREATE/REFERENCES necessários. A criação de policies em storage.objects usa o grant específico da extensão oficial supautils, confirmado na configuração hospedada; não foi ampliada a membresia em papéis de sistema. Isso confirma o requisito de configuração, sem afirmar que a migration foi executada em produção.
 
 Evidências locais em `test-results/saas`, `test-results/liquid-glass` e logs da execução. A CI executa todas as suítes no push de main; seu resultado remoto e o commit correspondente são verificados e reportados no encerramento, não inferidos do build local.
 
@@ -35,6 +44,6 @@ A imagem PostgreSQL do stack completo via CLI falhou por espaço. Alternativa va
 
 ## Ativação pendente
 
-Código preparado para revisão e evolução; SaaS não foi ativado em produção. Antes disso: SMTP/redirects verificáveis, backup restaurável, papel runtime restrito, revisão das policies existentes, migração explicitamente autorizada e definição do proprietário do legado. Não publicar com esses requisitos em aberto. Ver [MIGRATION.md](MIGRATION.md), [ARCHITECTURE.md](ARCHITECTURE.md) e [TESTING.md](TESTING.md).
+SaaS não foi ativado em produção. O bloqueio atual é SMTP adequado para usuários públicos, com confirmação e recuperação verificadas. Backup e rollback foram ensaiados, mas papel runtime, migration, novo bucket e variáveis SaaS ainda não foram aplicados no projeto hospedado. A titularidade do legado não foi confirmada: é possível preservar os registros sem associação para ativar contas novas após os demais requisitos; nenhum cadastro recebe os dados antigos automaticamente. Não publicar com requisitos de Auth/segurança em aberto. Ver [MIGRATION.md](MIGRATION.md), [ARCHITECTURE.md](ARCHITECTURE.md) e [TESTING.md](TESTING.md).
 
 A instrução direta de manter somente main prevalece sobre a sugestão dos anexos de branch dedicada/PR. Não foram criadas branches adicionais nem contratos pagos. O modo pessoal continua disponível para a infraestrutura atual; um banco migrado não aceita downgrade automático para schema 1.
