@@ -27,6 +27,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      - run: node --test tests/cloud-oauth-relay.test.mjs
       - run: npm audit --audit-level=moderate
       - run: npx playwright-core install --with-deps chromium
       - run: CHROMIUM_PATH="$(find "$HOME/.cache/ms-playwright" -path '*/chrome-linux*/chrome' -type f | head -1)" npm run test:e2e

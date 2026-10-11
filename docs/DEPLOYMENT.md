@@ -4,6 +4,12 @@
 
 O repositório já utiliza GitHub Pages a partir da raiz de `main`. Nessa hospedagem, a página inicial encaminha para `legacy/`, preservando o editor original sem alterar a configuração existente. A aplicação completa depende da API e deve ser publicada na Render. A disponibilidade do site estático não comprova funcionamento de Identity Studio ou persistência no Supabase.
 
+## Retorno OAuth de um cliente na nuvem
+
+`tools/cloud-oauth-relay.mjs` é um transporte temporário para o callback de um cliente OAuth oficial executado na nuvem. Ele valida o state, protege os endpoints internos com uma chave aleatória, expira os resultados e permite recuperação uma única vez. Não recebe tokens de acesso, credenciais PostgreSQL ou o verificador PKCE, não registra requisições e não usa disco para os callbacks. A troca do código pelo token acontece no cliente oficial. Execute seus testes com `node --test tests/cloud-oauth-relay.test.mjs`.
+
+O relay não é a aplicação nem comprova acesso ao banco. Após concluir a autenticação, restaure o comando de startup `npm start`, remova a variável temporária `OAUTH_RELAY_TOKEN` e valide novamente a aplicação real. O serviço final deve seguir o Blueprint; não mantenha esse receptor como endpoint da aplicação.
+
 ## Configuração preparada e acesso necessário
 
 `render.yaml` define um único Web Service **plan: free**, com build `npm ci --include=dev && npm run build`, startup `npm start` e health check `/healthz`. Frontend e backend usam a mesma URL pública; os endpoints ficam sob `/api`. A porta vem de `PORT`, definida pela Render, e o processo escuta em `0.0.0.0`.
