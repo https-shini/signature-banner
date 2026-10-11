@@ -1,4 +1,4 @@
-# Identity Studio
+# Identify · Identity Studio
 
 Central pessoal de identidade visual: gerencie banners, assinaturas de e-mail e fotos de perfil com contextos separados, biblioteca de imagens, modelos, histórico e exportação. Evolução do Signature Banner, cujo código original permanece em [`legacy/`](legacy/).
 
@@ -64,7 +64,7 @@ O HTML da assinatura exporta texto e links com tabela e estilos inline; a compos
 
 ## Implantação
 
-O Blueprint [`render.yaml`](render.yaml), o adaptador de Supabase Storage e as migrations estão preparados. Publicação e validação no Supabase/Render dependem de acesso autenticado a essas contas. Esses arquivos não comprovam deploy ou configuração externa concluída. Veja o [registro de validação](docs/VALIDATION.md).
+Aplicação publicada em **[identify-efsf.onrender.com](https://identify-efsf.onrender.com)**, a partir de `main`, em um Web Service Render Free com PostgreSQL e Storage privado no Supabase Free. Login, identidade, banners, uploads, exportações e persistência após reinicialização foram verificados em produção em 11/10/2026. A chave pessoal de login fica em `APP_ACCESS_TOKEN` nas variáveis privadas do serviço Render; não é publicada no repositório. Veja recursos, evidências e limites no [registro de validação](docs/VALIDATION.md).
 
 ## Licença
 
