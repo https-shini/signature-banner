@@ -24,6 +24,7 @@ export const contentSchema = z
     company: text(100),
     eyebrow: text(100),
     tagline: text(400),
+    specialties: text(200).default(''),
     email: z.union([z.literal(''), z.email().max(150)]),
     site: url,
     qrUrl: url,
@@ -31,7 +32,7 @@ export const contentSchema = z
   .strict();
 export const layoutSchema = z
   .object({
-    style: z.enum(['studio', 'minimal', 'split']),
+    style: z.enum(['studio', 'minimal', 'split', 'reference']),
     font: z.enum(['sans', 'serif', 'mono']),
     fontSize: z.number().int().min(12).max(480),
     textX: z.number().min(0).max(95),
@@ -55,6 +56,10 @@ export const layoutSchema = z
     photoZoom: z.number().min(1).max(4).default(1),
     photoOffsetX: z.number().min(-50).max(50).default(0),
     photoOffsetY: z.number().min(-50).max(50).default(0),
+    photoRotation: z.number().min(-180).max(180).default(0),
+    photoBrightness: z.number().min(0.5).max(1.5).default(1),
+    photoContrast: z.number().min(0.5).max(1.5).default(1),
+    photoSaturation: z.number().min(0).max(2).default(1),
     showQr: z.boolean(),
     qrX: z.number().min(0).max(90),
     qrY: z.number().min(0).max(90),
@@ -217,6 +222,7 @@ export const defaultDocument: AssetDocument = {
     role: 'Desenvolvedor de Software',
     company: '',
     eyebrow: 'SOFTWARE DEVELOPER',
+    specialties: '',
     tagline: 'Desenvolvendo soluções digitais que transformam desafios em oportunidades.',
     email: 'contato.guilhermescruz@gmail.com',
     site: 'https://bl4ck404.dev.br',
@@ -248,6 +254,10 @@ export const defaultDocument: AssetDocument = {
     photoZoom: 1,
     photoOffsetX: 0,
     photoOffsetY: 0,
+    photoRotation: 0,
+    photoBrightness: 1,
+    photoContrast: 1,
+    photoSaturation: 1,
     showQr: true,
     qrX: 83,
     qrY: 24,
@@ -263,7 +273,55 @@ export function forPlatform(
   return adaptDocument(kit, platformId);
 }
 
+export const referenceSignature = documentSchema.parse({
+  ...forPlatform(defaultDocument, 'gmail-banner'),
+  colors: { background: '#ffffff', primary: '#171c30', secondary: '#596579', accent: '#d91f58' },
+  content: { ...defaultDocument.content, specialties: 'Desenvolvimento · Automação · Consultoria' },
+  exportPreferences: { format: 'png', quality: 0.92, scale: 2 },
+  layout: {
+    ...defaultDocument.layout,
+    style: 'reference',
+    font: 'serif',
+    fontSize: 23,
+    textX: 22.2,
+    textY: 19,
+    spacing: 1.15,
+    avatarX: 3.6,
+    avatarY: 22,
+    avatarSize: 58,
+    qrX: 77,
+    qrY: 10,
+    qrSize: 80,
+    showQr: true,
+  },
+});
 export const systemTemplates = [
+  ...[
+    [
+      'system-signature-reference',
+      'Assinatura · Profissional',
+      'Apresentação, foto e QR em uma composição integrada.',
+      'SOFTWARE DEVELOPER',
+    ],
+    [
+      'system-signature-contact',
+      'Assinatura · Contato',
+      'Uma apresentação clara para iniciar uma conversa.',
+      'VAMOS CONVERSAR',
+    ],
+    [
+      'system-signature-portfolio',
+      'Assinatura · Portfólio',
+      'Destaque suas competências e o caminho para seus projetos.',
+      'CONHEÇA MEU TRABALHO',
+    ],
+  ].map(([id, name, subtitle, eyebrow]) => ({
+    id,
+    name,
+    subtitle,
+    platformId: 'gmail-banner' as const,
+    document: { ...referenceSignature, content: { ...referenceSignature.content, eyebrow } },
+  })),
   {
     id: 'system-studio',
     name: 'Studio',

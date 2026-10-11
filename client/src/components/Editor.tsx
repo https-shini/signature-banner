@@ -1,3 +1,6 @@
+import { QualityNotice } from './QualityNotice';
+import { useEditHistory } from '../hooks/useEditHistory';
+import { EditHistoryControls } from './EditHistoryControls';
 import { Button, Tabs, GlassSurface } from '../design-system';
 import { useEffect, useState } from 'react';
 import { ArrowLeft, Check, Download, Save, History, RotateCcw, BookmarkPlus } from 'lucide-react';
@@ -33,13 +36,25 @@ export function Editor({
   onExport: (a: Asset) => void;
   onTemplate: (a: Asset) => Promise<void>;
 }) {
-  const [draft, setDraft] = useState(asset),
-    [saved, setSaved] = useState(asset),
+  const edit = useEditHistory(asset);
+  const { draft, setDraft } = edit;
+  const [saved, setSaved] = useState(asset),
     [tab, setTab] = useState('content'),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [history, setHistory] = useState<Revision[]>([]),
     [tagText, setTagText] = useState(asset.tags.join(', '));
+  useEffect(() => {
+    const parsed = [
+      ...new Set(
+        tagText
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ),
+    ];
+    if (JSON.stringify(parsed) !== JSON.stringify(draft.tags)) setTagText(draft.tags.join(', '));
+  }, [draft.tags, tagText]);
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
   useEffect(() => {
     const listener = (e: BeforeUnloadEvent) => {
@@ -70,7 +85,7 @@ export function Editor({
         version: saved.version,
       });
       const a = await api<Asset>(`/assets/${asset.id}`, 'PUT', payload);
-      setDraft(a);
+      edit.reset(a);
       setSaved(a);
       setTagText(a.tags.join(', '));
       onSaved(a);
@@ -94,7 +109,7 @@ export function Editor({
         revisionId: r.id,
         version: saved.version,
       });
-      setDraft(a);
+      edit.reset(a);
       setSaved(a);
       setTagText(a.tags.join(', '));
       onSaved(a);
@@ -123,6 +138,7 @@ export function Editor({
           </div>
         </div>
         <div className="row">
+          <EditHistoryControls history={edit} busy={busy} />
           <span className={'save-status ' + (dirty ? 'unsaved' : '')}>
             <span />
             {dirty ? 'Alterações não salvas' : `Salvo · v${saved.version}`}
@@ -158,6 +174,7 @@ export function Editor({
               {note}
             </p>
           ))}
+          <QualityNotice document={draft.document} />
           <div className="canvas-caption">
             <span className="channel-badge">{platform.channel}</span>
             <p>{platform.hint}</p>
@@ -328,7 +345,7 @@ export function Editor({
               <DocumentFields
                 tab={tab}
                 document={draft.document}
-                onChange={(document) => setDraft({ ...draft, document })}
+                onChange={(document, coalesce) => setDraft({ ...draft, document }, coalesce)}
                 media={media}
               />
             )}

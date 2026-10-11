@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile } from 'node:fs/promises';
 import sharp from 'sharp';
+import jsQR from 'jsqr';
 import { Store } from '../server/store';
 import { LocalStorage } from '../server/storage';
 import { createApp } from '../server/app';
@@ -80,7 +81,13 @@ try {
       .click();
     await page.getByRole('heading', { name: 'Projeto E2E', exact: true }).waitFor();
     await page.getByLabel('Nome profissional', { exact: true }).fill('Ana Martins');
-    await page.getByLabel('Tags', { exact: true }).fill('Marca, Portfólio');
+    const tags = page.getByLabel('Tags', { exact: true });
+    await tags.fill('Marca');
+    await tags.press('End');
+    await tags.press(',');
+    await tags.press('Space');
+    await tags.pressSequentially('Portfólio');
+    assert.equal(await tags.inputValue(), 'Marca, Portfólio');
     await page.getByRole('button', { name: 'Salvar alterações' }).click();
     await page.getByText('Salvo · v2', { exact: true }).waitFor();
     const asset = (await store.assets()).find((a) => a.name === 'Projeto E2E')!;
@@ -223,6 +230,10 @@ try {
       0,
     );
     await page.getByLabel('Cargo', { exact: true }).fill('Consultora');
+    await page.getByRole('button', { name: 'Desfazer', exact: true }).click();
+    assert.equal(await page.getByLabel('Cargo', { exact: true }).inputValue(), '');
+    await page.getByRole('button', { name: 'Refazer', exact: true }).click();
+    assert.equal(await page.getByLabel('Cargo', { exact: true }).inputValue(), 'Consultora');
     await page.getByRole('button', { name: 'Salvar identidade', exact: true }).click();
     await page.getByText('Identidade atualizada.').waitFor();
     await page.getByRole('button', { name: 'Meus ativos', exact: false }).click();
@@ -347,7 +358,20 @@ try {
       const dialog = page.getByRole('dialog');
       await dialog.getByRole('tab', { name: 'Layout', exact: true }).click();
       await dialog.getByLabel('Largura do projeto', { exact: true }).fill('1000');
+      const previousHeight = await dialog
+        .getByLabel('Altura do projeto', { exact: true })
+        .inputValue();
       await dialog.getByLabel('Altura do projeto', { exact: true }).fill('1200');
+      await dialog.getByRole('button', { name: 'Desfazer', exact: true }).click();
+      assert.equal(
+        await dialog.getByLabel('Altura do projeto', { exact: true }).inputValue(),
+        previousHeight,
+      );
+      await dialog.getByRole('button', { name: 'Refazer', exact: true }).click();
+      assert.equal(
+        await dialog.getByLabel('Altura do projeto', { exact: true }).inputValue(),
+        '1200',
+      );
       await dialog.getByText('Preferências de exportação', { exact: true }).click();
       await dialog.getByLabel('Formato preferido').selectOption('jpeg');
       await dialog.getByRole('button', { name: 'Salvar modelo', exact: true }).click();
@@ -403,6 +427,105 @@ try {
       await page.getByRole('button', { name: 'Voltar para ativos' }).click();
     },
   );
+  await check('assinatura de referência, desfazer/refazer e QR legível no PNG 2×', async () => {
+    await page.getByRole('button', { name: 'Criar assinatura Gmail', exact: true }).click();
+    await page.getByLabel('Nome do ativo', { exact: true }).fill('Assinatura de referência E2E');
+    await page
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Criar ativo', exact: true })
+      .click();
+    await page
+      .getByRole('heading', { name: 'Assinatura de referência E2E', exact: true })
+      .waitFor();
+    const previousName = await page.getByLabel('Nome profissional', { exact: true }).inputValue();
+    await page.getByLabel('Nome profissional', { exact: true }).fill('Ana Martins');
+    await page.getByRole('button', { name: 'Desfazer', exact: true }).click();
+    assert.equal(
+      await page.getByLabel('Nome profissional', { exact: true }).inputValue(),
+      previousName,
+    );
+    await page.getByRole('button', { name: 'Refazer', exact: true }).click();
+    assert.equal(
+      await page.getByLabel('Nome profissional', { exact: true }).inputValue(),
+      'Ana Martins',
+    );
+    await page.getByLabel('Link do QR Code').fill('https://example.com/café?nome=Ana');
+    await page.getByLabel('Competências', { exact: true }).fill('Design · Software');
+    await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    await page.getByText('Salvo · v2', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Exportar', exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    assert.equal(await dialog.getByLabel('Escala de exportação').inputValue(), '2');
+    const downloaded = page.waitForEvent('download');
+    await dialog.getByRole('button', { name: 'Exportar PNG', exact: true }).click();
+    const file = await downloaded;
+    const bytes = await readFile((await file.path())!);
+    const { data, info } = await sharp(bytes)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+    assert.equal(info.width, 1200);
+    assert.equal(info.height, 320);
+    assert.equal(
+      jsQR(new Uint8ClampedArray(data), info.width, info.height)?.data,
+      'https://example.com/café?nome=Ana',
+    );
+    await dialog.getByText(/Arquivo exportado:/).waitFor();
+    await import('node:fs/promises').then((fs) =>
+      fs.writeFile('test-results/reference-signature.png', bytes),
+    );
+    await dialog.getByRole('button', { name: 'Fechar', exact: true }).click();
+    for (const width of [1440, 834, 390, 320]) {
+      await page.setViewportSize({ width, height: 1050 });
+      await audit('reference-' + width);
+      assert.equal(
+        await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+        false,
+      );
+    }
+    await page.setViewportSize({ width: 1440, height: 1050 });
+    await page.getByRole('tab', { name: 'Layout', exact: true }).click();
+    await page.getByLabel('Mostrar foto ou monograma').uncheck();
+    await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    await page.getByText('Salvo · v3', { exact: true }).waitFor();
+    const asset = (await store.assets()).find((a) => a.name === 'Assinatura de referência E2E')!;
+    assert.equal(asset.document.layout.textX, 4);
+    await page.getByRole('button', { name: 'Voltar para ativos' }).click();
+  });
+  await check('ajustes da foto alteram o documento, restauram original e persistem', async () => {
+    const profileId = (await store.profiles()).find((p) => p.name === 'Marca independente')!.id;
+    const photo = await store.addMedia(
+      profileId,
+      'Foto para ajustes',
+      await sharp({ create: { width: 200, height: 200, channels: 3, background: '#6080a0' } })
+        .png()
+        .toBuffer(),
+      200,
+      200,
+    );
+    await page.reload();
+    await page
+      .getByRole('button', { name: 'Editar Assinatura de referência E2E', exact: true })
+      .click();
+    await page.getByRole('tab', { name: 'Mídia', exact: true }).click();
+    await page.getByLabel('Foto de perfil', { exact: true }).selectOption(photo.id);
+    const rotation = page.getByRole('slider', { name: /Rotação da foto/ });
+    await rotation.focus();
+    await rotation.press('ArrowRight');
+    assert.equal(await rotation.inputValue(), '1');
+    await page.getByRole('button', { name: 'Restaurar ajustes da foto', exact: true }).click();
+    assert.equal(await rotation.inputValue(), '0');
+    await page.getByRole('button', { name: 'Desfazer', exact: true }).click();
+    assert.equal(await rotation.inputValue(), '1');
+    await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    await page.getByText('Salvo · v4', { exact: true }).waitFor();
+    assert.equal(
+      (await store.assets(profileId)).find((a) => a.name === 'Assinatura de referência E2E')!
+        .document.layout.photoRotation,
+      1,
+    );
+    await page.getByRole('button', { name: 'Voltar para ativos' }).click();
+  });
   assert.deepEqual(errors, [], 'Exceções de navegador');
   assert.deepEqual(external, [], 'Dependências externas não esperadas');
   console.log(

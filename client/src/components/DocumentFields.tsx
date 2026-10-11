@@ -13,7 +13,7 @@ export function DocumentFields({
 }: {
   tab: string;
   document: AssetDocument;
-  onChange: (d: AssetDocument) => void;
+  onChange: (d: AssetDocument, coalesce?: boolean) => void;
   media: Media[];
 }) {
   const content = (key: keyof AssetDocument['content'], value: string) =>
@@ -63,6 +63,13 @@ export function DocumentFields({
             maxLength={100}
             placeholder="Opcional"
             onChange={(e) => content('company', e.target.value)}
+          />
+        </Field>
+        <Field label="Competências" hint="Separe especialidades com · ou vírgulas.">
+          <input
+            value={d.content.specialties}
+            maxLength={200}
+            onChange={(e) => content('specialties', e.target.value)}
           />
         </Field>
         <Field label="Apresentação">
@@ -164,6 +171,7 @@ export function DocumentFields({
         </Field>
         <Field label="Composição">
           <select value={d.layout.style} onChange={(e) => layout('style', e.target.value)}>
+            <option value="reference">Assinatura · foto, apresentação e QR</option>
             <option value="studio">Studio · brilho sutil</option>
             <option value="minimal">Essencial · fundo sólido</option>
             <option value="split">Horizonte · formas geométricas</option>
@@ -224,7 +232,16 @@ export function DocumentFields({
           <input
             type="checkbox"
             checked={d.layout.showAvatar}
-            onChange={(e) => layout('showAvatar', e.target.checked)}
+            onChange={(e) =>
+              onChange({
+                ...d,
+                layout: {
+                  ...d.layout,
+                  showAvatar: e.target.checked,
+                  ...(d.layout.style === 'reference' ? { textX: e.target.checked ? 22.2 : 4 } : {}),
+                },
+              })
+            }
           />{' '}
           Mostrar foto ou monograma
         </label>
@@ -388,18 +405,56 @@ export function DocumentFields({
             ['photoZoom', 'Zoom da foto', 1, 4],
             ['photoOffsetX', 'Foto · ajuste horizontal', -50, 50],
             ['photoOffsetY', 'Foto · ajuste vertical', -50, 50],
+            ['photoRotation', 'Rotação da foto', -180, 180],
+            ['photoBrightness', 'Brilho da foto', 0.5, 1.5],
+            ['photoContrast', 'Contraste da foto', 0.5, 1.5],
+            ['photoSaturation', 'Saturação da foto', 0, 2],
           ].map(([key, label, min, max]) => (
             <Field key={key} label={`${label} · ${d.layout[key as 'photoZoom']}`}>
               <input
                 type="range"
                 min={min}
                 max={max}
-                step={key === 'photoZoom' ? 0.05 : 1}
+                step={
+                  ['photoZoom', 'photoBrightness', 'photoContrast', 'photoSaturation'].includes(
+                    String(key),
+                  )
+                    ? 0.05
+                    : 1
+                }
                 value={d.layout[key as 'photoZoom']}
                 onChange={(e) => layout(key as 'photoZoom', Number(e.target.value))}
               />
             </Field>
           ))}
+          <button
+            type="button"
+            className="button secondary"
+            onClick={() =>
+              onChange(
+                {
+                  ...d,
+                  layout: {
+                    ...d.layout,
+                    photoZoom: 1,
+                    photoOffsetX: 0,
+                    photoOffsetY: 0,
+                    photoRotation: 0,
+                    photoBrightness: 1,
+                    photoContrast: 1,
+                    photoSaturation: 1,
+                  },
+                },
+                false,
+              )
+            }
+          >
+            Restaurar ajustes da foto
+          </button>
+          <p className="muted small">
+            Ajustes não alteram o arquivo original. O upload fica no armazenamento privado deste
+            contexto.
+          </p>
         </>
       )}
       {media.length === 0 && (

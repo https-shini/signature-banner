@@ -85,7 +85,16 @@ export function TemplateLibrary({
               <Preview
                 document={{
                   ...t.document,
-                  content: profile.kit.content,
+                  content: {
+                    ...profile.kit.content,
+                    ...(t.document.layout.style === 'reference'
+                      ? {
+                          eyebrow: t.document.content.eyebrow,
+                          specialties:
+                            profile.kit.content.specialties || t.document.content.specialties,
+                        }
+                      : {}),
+                  },
                   photoId: profile.kit.photoId,
                   logoId: profile.kit.logoId,
                 }}
@@ -105,9 +114,11 @@ export function TemplateLibrary({
       <h2 className="subheading">
         Meus modelos <span className="pill">{templates.length}</span>
       </h2>
-      {templates.length === 0 ? (
+      {templates.filter(matches).length === 0 ? (
         <Empty
-          title="Seu jeito de criar, salvo."
+          title={
+            templates.length ? 'Nenhum modelo corresponde à busca.' : 'Seu jeito de criar, salvo.'
+          }
           description="No editor, escolha “Salvar como modelo” para reutilizar uma composição neste contexto."
         />
       ) : (

@@ -54,7 +54,17 @@ export function NewAsset({
               if (template.id.startsWith('system-'))
                 document = {
                   ...document,
-                  content: structuredClone(profile.kit.content),
+                  content: {
+                    ...structuredClone(profile.kit.content),
+                    ...(template.document.layout.style === 'reference'
+                      ? {
+                          eyebrow: template.document.content.eyebrow,
+                          specialties:
+                            profile.kit.content.specialties ||
+                            template.document.content.specialties,
+                        }
+                      : {}),
+                  },
                   photoId: profile.kit.photoId,
                   logoId: profile.kit.logoId,
                   backgroundImageId: profile.kit.backgroundImageId,

@@ -1,3 +1,5 @@
+import { useEditHistory } from '../hooks/useEditHistory';
+import { EditHistoryControls } from './EditHistoryControls';
 import { Button, Tabs, PageHeading, GlassSurface } from '../design-system';
 import { useEffect, useState } from 'react';
 import { Save, Check, Trash2 } from 'lucide-react';
@@ -21,8 +23,9 @@ export function ProfileEditor({
   onDelete: () => void;
   onDirtyChange: (dirty: boolean) => void;
 }) {
-  const [draft, setDraft] = useState(profile),
-    [saved, setSaved] = useState(profile),
+  const edit = useEditHistory(profile);
+  const { draft, setDraft } = edit;
+  const [saved, setSaved] = useState(profile),
     [tab, setTab] = useState('content'),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
@@ -61,7 +64,7 @@ export function ProfileEditor({
                   kit: draft.kit,
                 });
                 const p = await api<Profile>(`/profiles/${profile.id}`, 'PUT', input);
-                setDraft(p);
+                edit.reset(p);
                 setSaved(p);
                 onSaved(p);
               } catch (e) {
@@ -75,6 +78,7 @@ export function ProfileEditor({
           </Button>
         }
       />
+      <EditHistoryControls history={edit} busy={busy} />
       {error && <ErrorNotice message={error} />}
       <div className="identity-layout">
         <GlassSurface as="section" level="panel" className="surface identity-preview">
@@ -141,7 +145,7 @@ export function ProfileEditor({
             <DocumentFields
               tab={tab}
               document={draft.kit}
-              onChange={(kit) => setDraft({ ...draft, kit })}
+              onChange={(kit, coalesce) => setDraft({ ...draft, kit }, coalesce)}
               media={media}
             />
           </div>

@@ -1,3 +1,6 @@
+import { QualityNotice } from './QualityNotice';
+import { useEditHistory } from '../hooks/useEditHistory';
+import { EditHistoryControls } from './EditHistoryControls';
 import { useEffect, useState } from 'react';
 import { Button, Tabs } from '../design-system';
 import { platforms, templateInputSchema, type Media, type Template } from '../../../shared/model';
@@ -19,8 +22,9 @@ export function TemplateEditor({
   onClose: () => void;
   onSaved: (t: Template) => void;
 }) {
-  const [draft, setDraft] = useState(template),
-    [saved, setSaved] = useState(template),
+  const edit = useEditHistory(template);
+  const { draft, setDraft } = edit;
+  const [saved, setSaved] = useState(template),
     [tab, setTab] = useState('content'),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
@@ -48,7 +52,7 @@ export function TemplateEditor({
         .omit({ profileId: true })
         .parse({ name: draft.name, platformId: draft.platformId, document: draft.document });
       const t = await api<Template>('/templates/' + draft.id, 'PUT', payload);
-      setDraft(t);
+      edit.reset(t);
       setSaved(t);
       onSaved(t);
       setNotice(true);
@@ -61,9 +65,11 @@ export function TemplateEditor({
   return (
     <Modal title="Editar modelo" onClose={close} wide>
       <p className="muted">Editar este modelo não altera os ativos já criados a partir dele.</p>
+      <EditHistoryControls history={edit} busy={busy} />
       <div className="template-edit-grid">
         <section>
           <FormatPreview document={draft.document} images={images} platformId={draft.platformId} />
+          <QualityNotice document={draft.document} />
         </section>
         <section>
           <Field label="Nome do modelo">
@@ -114,7 +120,7 @@ export function TemplateEditor({
               tab={tab}
               document={draft.document}
               media={media}
-              onChange={(document) => setDraft({ ...draft, document })}
+              onChange={(document, coalesce) => setDraft({ ...draft, document }, coalesce)}
             />
           </div>
         </section>

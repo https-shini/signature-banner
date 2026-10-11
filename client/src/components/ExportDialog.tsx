@@ -1,3 +1,4 @@
+import { QualityNotice } from './QualityNotice';
 import { Button } from '../design-system';
 import { useState } from 'react';
 import { Download, Check, LockKeyhole } from 'lucide-react';
@@ -30,7 +31,8 @@ export function ExportDialog({
     [preserve, setPreserve] = useState(true),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
-    [done, setDone] = useState(false);
+    [done, setDone] = useState(false),
+    [fileSize, setFileSize] = useState<number | null>(null);
   const result = exportSchema.safeParse({ format, width, height, quality });
   const platform = platforms.find((p) => p.id === asset.platformId)!;
   function changeWidth(w: number) {
@@ -54,6 +56,7 @@ export function ExportDialog({
         throw new Error(
           `O arquivo excede ${(platform.maxBytes! / 1024 / 1024).toFixed(0)} MB deste perfil. Reduza resolução ou qualidade.`,
         );
+      setFileSize(blob.size);
       download(blob, `${filename(asset.name)}.${format === 'jpeg' ? 'jpg' : format}`);
       setDone(true);
     } catch (e) {
@@ -85,7 +88,7 @@ export function ExportDialog({
               <option value="jpeg">JPEG · arquivo leve</option>
               <option value="webp">WebP · para a web</option>
               <option value="svg">SVG · vetorial</option>
-              {asset.kind === 'signature' && (
+              {platform.channel === 'Gmail' && (
                 <option value="html">HTML · assinatura com links</option>
               )}
             </select>
@@ -156,7 +159,10 @@ export function ExportDialog({
                     max="1"
                     step=".01"
                     value={quality}
-                    onChange={(e) => setQuality(Number(e.target.value))}
+                    onChange={(e) => {
+                      setQuality(Number(e.target.value));
+                      setDone(false);
+                    }}
                   />
                 </Field>
               )}
@@ -178,6 +184,17 @@ export function ExportDialog({
             <p className="platform-hint">
               A proporção mudou: a imagem será esticada. Para recompor o conteúdo, altere as
               dimensões no editor.
+            </p>
+          )}
+          {format !== 'html' && (
+            <QualityNotice
+              document={asset.document}
+              scale={Math.min(width / asset.document.width, height / asset.document.height)}
+            />
+          )}
+          {done && fileSize !== null && (
+            <p role="status" className="platform-hint">
+              Arquivo exportado: {(fileSize / 1024).toFixed(1)} KB · {width} × {height} px.
             </p>
           )}
           {!result.success && <ErrorNotice message={result.error.issues[0].message} />}

@@ -602,6 +602,26 @@ export default function App() {
                   </div>
                 </div>
               </section>
+              <section className="quick-starts" aria-label="Ferramentas para começar">
+                {[
+                  ['system-signature-reference', 'Criar assinatura Gmail'],
+                  ['system-linkedin', 'Criar capa LinkedIn'],
+                  ['system-avatar', 'Criar foto de perfil'],
+                ].map(([id, label]) => (
+                  <Button
+                    key={id}
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={() => {
+                      setTemplateChoice(systemTemplates.find((t) => t.id === id));
+                      setNewAsset(true);
+                    }}
+                  >
+                    {label}
+                    <ArrowUpRight size={18} />
+                  </Button>
+                ))}
+              </section>
               <div className="metrics">
                 <div>
                   <span className="metric-icon purple">
@@ -1065,6 +1085,7 @@ export default function App() {
               company: '',
               eyebrow: '',
               tagline: '',
+              specialties: '',
               email: '',
               site: '',
               qrUrl: '',

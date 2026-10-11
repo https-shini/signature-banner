@@ -42,7 +42,7 @@ flowchart LR
 ```
 
 - `client/src`: aplicação, API client, editor, kit, modais e exportação.
-- `shared/model.ts`: domínio, validações, catálogo de plataformas e migração do legado.
+- `shared/model.ts`: domínio, validações, contratos e migração do legado; `shared/platforms.ts` mantém o catálogo.
 - `shared/render.ts`: escaping, SVG, assinatura HTML e rasterização do SVG. Não depende da API.
 - `server/app.ts`: HTTP, chave de acesso, origem, erros e rotas.
 - `server/store.ts`: domínio, SQL parametrizado, transações, histórico e backup.
@@ -84,4 +84,4 @@ Supabase Storage e PostgreSQL não compartilham transações. Uploads são reali
 5. Operação: build, testes, acessibilidade e documentação; configuração de Render gratuita e Supabase privado.
 6. Produção: listar/reutilizar recursos autorizados, verificar plano e cotas, aplicar configuração, publicar e testar a URL pública. A etapa é bloqueada enquanto não houver acesso autenticado aos serviços.
 
-Para adicionar uma plataforma, atualize o catálogo e o contrato em `shared/model.ts`, seus limites e testes. Uma nova categoria pode registrar outro renderer e editor sem alterar as regras de versões, perfis e backup. Quando o volume exigir, filtre/pagine consultas no banco, migre JSONB indexável para colunas e substitua a chave pessoal por usuários e autorização por proprietário.
+Para adicionar uma plataforma, atualize `shared/platforms.ts` e seus IDs tipados, seus limites e testes. Uma nova categoria pode registrar outro renderer e editor sem alterar as regras de versões, perfis e backup. Quando o volume exigir, filtre/pagine consultas no banco, migre JSONB indexável para colunas e substitua a chave pessoal por usuários e autorização por proprietário.

@@ -2471,3 +2471,38 @@ small {
 .modal-actions {
   flex-wrap: wrap;
 }
+
+/* Shared quality feedback and quick starts use the existing material tokens. */
+.quality-notice {
+  margin-block: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--color-surface-soft);
+  font-size: 13px;
+}
+.quality-notice summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.quality-notice ul {
+  padding-left: 20px;
+  line-height: 1.6;
+}
+.quick-starts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-block: 18px;
+}
+.quick-starts .button {
+  justify-content: space-between;
+  flex-wrap: wrap;
+  min-width: 0;
+  text-align: left;
+}
+@media (max-width: 760px) {
+  .quick-starts {
+    grid-template-columns: 1fr;
+  }
+}

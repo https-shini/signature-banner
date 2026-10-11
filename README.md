@@ -36,14 +36,15 @@ O Docker permite acesso sem senha **somente na interface loopback**, para desenv
 ## Funcionalidades implementadas
 
 - CRUD de contextos e ativos; duplicação, busca por nome/tags, favoritos, filtros e ordenação.
-- Presets de LinkedIn (1584×396), assinatura (600×180), banner (1200×320) e avatar (800×800), com dimensões editáveis.
+- 15 presets de Gmail, LinkedIn, Instagram, YouTube e formatos livres, com dimensões editáveis e guias orientativas.
 - Editor de conteúdo, paleta, fontes locais, composição, espaçamento, posição, QR Code e seleção de fotos/logos; zoom e deslocamento da foto.
 - Identidade reutilizável: novos ativos herdam o kit; atualizar ativos existentes é uma ação explícita.
+- Três modelos adicionais de assinatura inspirados na referência, competências, pares de fontes, exportação padrão 2×, ajustes reversíveis de foto e desfazer/refazer nos editores.
 - Modelos prontos e personalizados; salvar, duplicar, renomear e criar ativos a partir de modelos.
 - Cada salvamento gera uma revisão; restauração cria outra revisão e conflitos concorrentes retornam HTTP 409.
 - Exportação PNG/JPEG/WebP/SVG com resolução, qualidade e proporção; assinatura HTML com contatos clicáveis.
 - Backup JSON de contextos, imagens, modelos e revisões; restauração aditiva com novos IDs, validação de referências e transação PostgreSQL.
-- Exportação de projeto e importação das configurações v3 do Signature Banner.
+- Exportação de projeto e importação das configurações v3/v4 do Signature Banner.
 
 ## Validação
 
@@ -63,7 +64,7 @@ Os testes de API usam schemas exclusivos no PostgreSQL real, eliminados ao termi
 
 Esta versão é para uma pessoa com vários contextos; não é um serviço multiusuário. A chave pessoal é exigida em produção e fica na sessão do navegador após login. Credenciais de Supabase nunca são enviadas ao frontend. Use HTTPS e mantenha backups fora dos serviços hospedados.
 
-Uploads: até 5 MB, 16 megapixels, imagens estáticas normalizadas para até 1600×1600. Exportações: até 8000 px por lado e 40 megapixels. Importação: até 24 MB. Para bibliotecas maiores, veja [backup e recuperação](docs/DEPLOYMENT.md#backup-e-recuperação).
+Uploads: até 5 MB, 16 megapixels, imagens estáticas normalizadas para até 4000×4000 (fallback de 1600 px quando necessário para manter o PNG dentro de 5 MB). Exportações: até 8000 px por lado e 40 megapixels. Importação: até 24 MB. Para bibliotecas maiores, veja [backup e recuperação](docs/DEPLOYMENT.md#backup-e-recuperação).
 
 O HTML da assinatura exporta texto e links com tabela e estilos inline; a composição gráfica completa, fotos e QR ficam nas imagens exportadas. A aplicação não instala assinaturas automaticamente no Gmail nem publica capas no LinkedIn. Textos longos podem receber reticências: confira o preview. Fontes próprias, camadas livres, integrações OAuth e colaboração ficam para etapas futuras.
 
@@ -78,3 +79,7 @@ MIT. O gerador de QR Code de Kazuhiko Arase foi reaproveitado com seus avisos e 
 ## Formatos e arquivos editáveis
 
 O catálogo agora inclui Gmail, LinkedIn pessoal/página, Instagram e YouTube, com 15 presets e composições específicas. Modelos podem ser editados e transportados com imagens; configurações portáteis importam no contexto selecionado. Consulte [formatos, personalização, interoperabilidade e limites](docs/FORMATS.md).
+
+## Evolução do editor e próxima fase
+
+Veja [escopo, correções e limites do editor](docs/platform/PROGRESS.md) e o [diagnóstico do SaaS multiusuário](docs/saas/PROGRESS.md). Avisos de qualidade são estimativas, não certificação de legibilidade universal; o QR dos arquivos raster é decodificado por um leitor independente nos testes.
