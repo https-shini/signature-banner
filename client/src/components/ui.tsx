@@ -1,3 +1,4 @@
+import { Button } from '../design-system';
 import {
   cloneElement,
   isValidElement,
@@ -38,9 +39,15 @@ export function Modal({
     >
       <header>
         <h2 id={id}>{title}</h2>
-        <button className="icon-button" onClick={onClose} aria-label="Fechar">
+        <Button
+          variant="subtle"
+          className="icon-button"
+          type="button"
+          onClick={onClose}
+          aria-label="Fechar"
+        >
           <X size={20} />
-        </button>
+        </Button>
       </header>
       {children}
     </dialog>

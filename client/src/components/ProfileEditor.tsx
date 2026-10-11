@@ -1,3 +1,4 @@
+import { Button, Tabs, PageHeading, GlassSurface } from '../design-system';
 import { useEffect, useState } from 'react';
 import { Save, Check, Trash2 } from 'lucide-react';
 import { profileInputSchema, type Media, type Profile } from '../../../shared/model';
@@ -42,41 +43,41 @@ export function ProfileEditor({
   }, [dirty]);
   return (
     <div className="identity-page">
-      <div className="page-heading">
-        <div>
-          <p className="eyebrow">A BASE DE TUDO</p>
-          <h1>Minha identidade</h1>
-          <p className="muted">Um ponto de partida consistente para todos os seus canais.</p>
-        </div>
-        <button
-          className="button primary"
-          disabled={busy || !dirty}
-          onClick={async () => {
-            setBusy(true);
-            setError('');
-            try {
-              const input = profileInputSchema.parse({
-                name: draft.name,
-                description: draft.description,
-                kit: draft.kit,
-              });
-              const p = await api<Profile>(`/profiles/${profile.id}`, 'PUT', input);
-              setDraft(p);
-              setSaved(p);
-              onSaved(p);
-            } catch (e) {
-              setError((e as Error).message);
-            } finally {
-              setBusy(false);
-            }
-          }}
-        >
-          {dirty ? <Save size={16} /> : <Check size={16} />}Salvar identidade
-        </button>
-      </div>
+      <PageHeading
+        eyebrow={<>A BASE DE TUDO</>}
+        title={<>Minha identidade</>}
+        description={<>Um ponto de partida consistente para todos os seus canais.</>}
+        actions={
+          <Button
+            variant="primary"
+            disabled={busy || !dirty}
+            onClick={async () => {
+              setBusy(true);
+              setError('');
+              try {
+                const input = profileInputSchema.parse({
+                  name: draft.name,
+                  description: draft.description,
+                  kit: draft.kit,
+                });
+                const p = await api<Profile>(`/profiles/${profile.id}`, 'PUT', input);
+                setDraft(p);
+                setSaved(p);
+                onSaved(p);
+              } catch (e) {
+                setError((e as Error).message);
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            {dirty ? <Save size={16} /> : <Check size={16} />}Salvar identidade
+          </Button>
+        }
+      />
       {error && <ErrorNotice message={error} />}
       <div className="identity-layout">
-        <section className="surface identity-preview">
+        <GlassSurface as="section" level="panel" className="surface identity-preview">
           <p className="eyebrow">SUA IDENTIDADE PROFISSIONAL</p>
           <Preview document={draft.kit} images={images} />
           <div className="identity-note">
@@ -118,26 +119,25 @@ export function ProfileEditor({
             <Trash2 size={15} />
             Excluir este contexto
           </button>
-        </section>
-        <section className="surface identity-settings">
-          <div className="editor-tabs" role="tablist" aria-label="Identidade visual">
-            {[
+        </GlassSurface>
+        <GlassSurface as="section" level="panel" className="surface identity-settings">
+          <Tabs
+            label="Identidade visual"
+            items={[
               ['content', 'Informações'],
               ['appearance', 'Cores e fontes'],
               ['media', 'Fotos e logo'],
-            ].map(([value, label]) => (
-              <button
-                role="tab"
-                aria-selected={tab === value}
-                key={value}
-                className={tab === value ? 'active' : ''}
-                onClick={() => setTab(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="editor-fields">
+            ]}
+            value={tab}
+            onChange={setTab}
+            panelId="identity-fields"
+          />
+          <div
+            className="editor-fields"
+            role="tabpanel"
+            id="identity-fields"
+            aria-labelledby={`identity-fields-tab-${tab}`}
+          >
             <DocumentFields
               tab={tab}
               document={draft.kit}
@@ -145,7 +145,7 @@ export function ProfileEditor({
               media={media}
             />
           </div>
-        </section>
+        </GlassSurface>
       </div>
     </div>
   );

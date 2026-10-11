@@ -1,3 +1,4 @@
+import { Button } from '../design-system';
 import { useState } from 'react';
 import { Download, Check, LockKeyhole } from 'lucide-react';
 import { exportSchema, platforms, type Asset, type ExportOptions } from '../../../shared/model';
@@ -155,16 +156,22 @@ export function ExportDialog({
           </p>
           {!result.success && <ErrorNotice message={result.error.issues[0].message} />}
           {error && <ErrorNotice message={error} />}
-          <button className="button primary full" disabled={busy || !result.success} onClick={run}>
+          <Button
+            variant="primary"
+            className="full"
+            disabled={busy || !result.success}
+            onClick={run}
+          >
             {done ? <Check size={17} /> : <Download size={17} />}{' '}
             {busy
               ? 'Preparando…'
               : done
                 ? 'Exportado · baixar novamente'
                 : 'Exportar ' + format.toUpperCase()}
-          </button>
-          <button
-            className="button subtle full"
+          </Button>
+          <Button
+            variant="subtle"
+            className="full"
             disabled={busy}
             onClick={async () => {
               try {
@@ -178,7 +185,7 @@ export function ExportDialog({
             }}
           >
             Exportar projeto em JSON
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

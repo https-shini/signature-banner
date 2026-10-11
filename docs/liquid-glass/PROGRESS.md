@@ -25,3 +25,9 @@ Tokens semânticos em `client/src/design-system/tokens.css`; materiais em `mater
 ## Fase 1 — implementada, em validação
 
 Tokens, materiais e superfícies sem wrappers adicionais. Marca Identify e footer compartilhado; navegação mobile revela configurações. Compilação passa. Próxima fase: consolidar headings/controles, corrigir achados da matriz visual e verificar teclado, preferências e fluxos.
+
+## Fase 2 — integração
+
+`GlassSurface`, `Button`, `BrandMark`, `StudioFooter`, `PageHeading` e `Tabs` compartilhados. Header/sidebar usam chrome; contas, editor, identidade, mídia e modelos usam painéis; dialog conserva foco nativo/Escape. Abas passam a ter roving tabindex, setas/Home/End e relações tab/tabpanel. Footer aplicado a todas as telas internas. Paleta de UI consolidada em tokens sem alterar a paleta dos documentos exportados. Sem dependências adicionadas.
+
+Primeira matriz após integração encontrou alvos pequenos ainda sobrescritos pela regra mobile e overflow das métricas após aumentar a fonte. Corrigidos nas regras de origem: botões 44 px no celular, métricas `minmax(0, 1fr)` e texto com quebra. A arte decorativa no mobile foi removida para preservar hierarquia e contraste. Nova matriz em execução.

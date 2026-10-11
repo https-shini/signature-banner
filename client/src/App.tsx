@@ -1,3 +1,4 @@
+import { Button, PageHeading, GlassSurface, BrandMark, StudioFooter } from './design-system';
 import { useEffect, useRef, useState } from 'react';
 import {
   ArrowDownToLine,
@@ -263,8 +264,8 @@ export default function App() {
   if (login)
     return (
       <main className="login-page">
-        <div className="surface login-card">
-          <span className="brand-icon">is</span>
+        <GlassSurface as="div" level="panel" className="surface login-card">
+          <BrandMark />
           <h1>Seu espaço, protegido.</h1>
           <p className="muted">
             Informe a chave de acesso configurada para este ambiente. Ela será mantida apenas nesta
@@ -289,9 +290,11 @@ export default function App() {
               />
             </Field>
             {error && <ErrorNotice message={error} />}
-            <button className="button primary full">Entrar no Studio</button>
+            <Button variant="primary" className="full">
+              Entrar no Studio
+            </Button>
           </form>
-        </div>
+        </GlassSurface>
       </main>
     );
   return (
@@ -299,7 +302,7 @@ export default function App() {
       <a href="#main-content" className="skip-link">
         Pular para o conteúdo
       </a>
-      <aside className="sidebar">
+      <GlassSurface as="aside" level="chrome" className="sidebar">
         <a
           className="brand"
           href="#"
@@ -308,9 +311,9 @@ export default function App() {
             if (!selected) setView('assets');
           }}
         >
-          <span className="brand-icon">is</span>
+          <BrandMark />
           <span>
-            identity<span className="brand-studio">studio</span>
+            Identify<span className="brand-studio">studio</span>
           </span>
         </a>
         <div className="workspace-select">
@@ -340,11 +343,12 @@ export default function App() {
           <ChevronDown size={15} />
         </div>
         <p className="nav-heading">SEU ESPAÇO</p>
-        <nav>
+        <nav tabIndex={0} aria-label="Navegação do espaço">
           {nav.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               className={'nav-item ' + (view === id ? 'active' : '')}
+              aria-current={view === id ? 'page' : undefined}
               disabled={!!selected}
               onClick={() => {
                 setView(id);
@@ -402,9 +406,9 @@ export default function App() {
             <span className="status-dot" title="Identidade pessoal" />
           </div>
         </div>
-      </aside>
+      </GlassSurface>
       <div className="main-shell">
-        <header className="topbar">
+        <GlassSurface as="header" level="chrome" className="topbar">
           <div className="breadcrumb">
             <span>Meu workspace</span>
             <span>/</span>
@@ -419,7 +423,7 @@ export default function App() {
             </span>
             <span className="top-avatar">{profile?.name.slice(0, 1) ?? 'I'}</span>
           </div>
-        </header>
+        </GlassSurface>
         <main id="main-content" className={'main-content ' + (selected ? 'editing' : '')}>
           {error && (
             <div className="global-error">
@@ -463,34 +467,36 @@ export default function App() {
               title="Sua identidade começa aqui."
               description="Crie seu primeiro contexto para reunir seus ativos visuais."
               action={
-                <button className="button primary" onClick={() => setNewProfile(true)}>
+                <Button variant="primary" onClick={() => setNewProfile(true)}>
                   <Plus size={17} />
                   Criar contexto
-                </button>
+                </Button>
               }
             />
           ) : view === 'assets' ? (
             <>
-              <div className="page-heading">
-                <div>
-                  <p className="eyebrow">CRIAR. ORGANIZAR. CONECTAR.</p>
-                  <h1>
+              <PageHeading
+                eyebrow={<>CRIAR. ORGANIZAR. CONECTAR.</>}
+                title={
+                  <>
                     Minha biblioteca<span className="heading-dot">.</span>
-                  </h1>
-                  <p className="muted">Sua identidade, pronta para cada novo ponto de contato.</p>
-                </div>
-                <button
-                  className="button primary"
-                  disabled={busy}
-                  onClick={() => {
-                    setTemplateChoice(undefined);
-                    setNewAsset(true);
-                  }}
-                >
-                  <Plus size={18} />
-                  Criar ativo
-                </button>
-              </div>
+                  </>
+                }
+                description={<>Sua identidade, pronta para cada novo ponto de contato.</>}
+                actions={
+                  <Button
+                    variant="primary"
+                    disabled={busy}
+                    onClick={() => {
+                      setTemplateChoice(undefined);
+                      setNewAsset(true);
+                    }}
+                  >
+                    <Plus size={18} />
+                    Criar ativo
+                  </Button>
+                }
+              />
               <section className="hero">
                 <div>
                   <span className="hero-label">
@@ -642,7 +648,7 @@ export default function App() {
                   {visible.map((a) => {
                     const p = platforms.find((p) => p.id === a.platformId)!;
                     return (
-                      <article className="asset-card" key={a.id}>
+                      <GlassSurface as="article" level="panel" className="asset-card" key={a.id}>
                         <button
                           className={'card-preview ' + (a.kind === 'avatar' ? 'card-avatar' : '')}
                           onClick={() => setSelected(a)}
@@ -760,7 +766,7 @@ export default function App() {
                             </div>
                           </div>
                         </div>
-                      </article>
+                      </GlassSurface>
                     );
                   })}
                   <button
@@ -795,12 +801,6 @@ export default function App() {
                   />
                 )}
               </section>
-              <footer className="page-footer">
-                <span>Uma presença consistente começa com uma boa identidade.</span>
-                <span>
-                  Identity Studio <span>✦</span>
-                </span>
-              </footer>
             </>
           ) : view === 'identity' ? (
             <ProfileEditor
@@ -880,17 +880,13 @@ export default function App() {
             />
           ) : (
             <>
-              <div className="page-heading">
-                <div>
-                  <p className="eyebrow">SEU ESPAÇO, SEUS DADOS</p>
-                  <h1>Configurações e backup</h1>
-                  <p className="muted">
-                    Mantenha sua identidade segura e leve seus projetos com você.
-                  </p>
-                </div>
-              </div>
+              <PageHeading
+                eyebrow={<>SEU ESPAÇO, SEUS DADOS</>}
+                title={<>Configurações e backup</>}
+                description={<>Mantenha sua identidade segura e leve seus projetos com você.</>}
+              />
               <div className="settings-grid">
-                <section className="surface settings-card">
+                <GlassSurface as="section" level="panel" className="surface settings-card">
                   <span className="metric-icon purple">
                     <Download size={23} />
                   </span>
@@ -899,16 +895,12 @@ export default function App() {
                     Exporte todos os contextos, ativos, imagens, modelos e versões em um único
                     arquivo JSON. Guarde uma cópia antes de excluir dados.
                   </p>
-                  <button
-                    className="button primary"
-                    disabled={busy}
-                    onClick={() => perform(backup)}
-                  >
+                  <Button variant="primary" disabled={busy} onClick={() => perform(backup)}>
                     <ArrowDownToLine size={17} />
                     Exportar backup completo
-                  </button>
-                </section>
-                <section className="surface settings-card">
+                  </Button>
+                </GlassSurface>
+                <GlassSurface as="section" level="panel" className="surface settings-card">
                   <span className="metric-icon green">
                     <Upload size={23} />
                   </span>
@@ -917,16 +909,16 @@ export default function App() {
                     Importe um backup ou projeto como novos contextos, preservando os atuais.
                     Configurações v3 do antigo Signature Banner são importadas no contexto ativo.
                   </p>
-                  <button
-                    className="button secondary"
+                  <Button
+                    variant="secondary"
                     disabled={busy}
                     onClick={() => importRef.current?.click()}
                   >
                     <Upload size={17} />
                     Importar JSON
-                  </button>
-                </section>
-                <section className="surface settings-card">
+                  </Button>
+                </GlassSurface>
+                <GlassSurface as="section" level="panel" className="surface settings-card">
                   <span className="metric-icon blue">
                     <FolderOpen size={23} />
                   </span>
@@ -935,16 +927,12 @@ export default function App() {
                     Separe marcas, projetos e contextos profissionais. Fotos e modelos
                     personalizados ficam vinculados ao contexto em que foram criados.
                   </p>
-                  <button
-                    className="button secondary"
-                    disabled={busy}
-                    onClick={() => setNewProfile(true)}
-                  >
+                  <Button variant="secondary" disabled={busy} onClick={() => setNewProfile(true)}>
                     <Plus size={17} />
                     Criar novo contexto
-                  </button>
-                </section>
-                <section className="surface settings-card">
+                  </Button>
+                </GlassSurface>
+                <GlassSurface as="section" level="panel" className="surface settings-card">
                   <span className="metric-icon peach">
                     <ShieldCheck size={23} />
                   </span>
@@ -954,8 +942,8 @@ export default function App() {
                     externas. A biblioteca aceita imagens estáticas e rejeita SVGs enviados.
                   </p>
                   {token.get() && (
-                    <button
-                      className="button secondary"
+                    <Button
+                      variant="secondary"
                       onClick={() => {
                         token.clear();
                         setLoginToken('');
@@ -963,16 +951,17 @@ export default function App() {
                       }}
                     >
                       Encerrar sessão
-                    </button>
+                    </Button>
                   )}
                   <small>
                     Backups JSON de até 24 MB. Para bibliotecas maiores, use o backup PostgreSQL da
                     documentação.
                   </small>
-                </section>
+                </GlassSurface>
               </div>
             </>
           )}
+          <StudioFooter />
         </main>
       </div>
       {notice && (
