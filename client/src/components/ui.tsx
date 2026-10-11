@@ -23,15 +23,56 @@ export function Modal({
   const ref = useRef<HTMLDialogElement>(null),
     id = useId();
   useEffect(() => {
-    ref.current?.showModal();
+    const previousFocus =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const dialog = ref.current;
-    return () => dialog?.close();
+    dialog?.showModal();
+    return () => {
+      dialog?.close();
+      if (previousFocus?.isConnected) previousFocus.focus();
+    };
   }, []);
   return (
     <dialog
       ref={ref}
       className={'modal ' + (wide ? 'modal-wide' : '')}
       aria-labelledby={id}
+      tabIndex={-1}
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab') return;
+        const dialog = event.currentTarget;
+        const controls = Array.from(
+          dialog.querySelectorAll<HTMLElement>(
+            'button, [href], input, select, textarea, [tabindex]',
+          ),
+        ).filter(
+          (element) =>
+            element.tabIndex >= 0 &&
+            !element.matches(':disabled') &&
+            element.getClientRects().length > 0 &&
+            getComputedStyle(element).visibility !== 'hidden',
+        );
+        const first = controls[0],
+          last = controls.at(-1);
+        if (!first) {
+          event.preventDefault();
+          dialog.focus();
+          return;
+        }
+        if (
+          event.shiftKey &&
+          (document.activeElement === first || document.activeElement === dialog)
+        ) {
+          event.preventDefault();
+          last?.focus();
+        } else if (
+          !event.shiftKey &&
+          (document.activeElement === last || document.activeElement === dialog)
+        ) {
+          event.preventDefault();
+          first.focus();
+        }
+      }}
       onCancel={(e) => {
         e.preventDefault();
         onClose();

@@ -9,34 +9,33 @@
 :where(.glass--chrome, .sidebar, .topbar) {
   background-color: var(--glass-chrome);
   background-image: var(--glass-reflection);
-  backdrop-filter: blur(var(--glass-blur)) saturate(120%);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
   box-shadow: var(--shadow-floating);
 }
 :where(.glass--overlay, .modal) {
   background-color: var(--glass-overlay);
   background-image: var(--glass-reflection);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: var(--glass-overlay-filter);
+  -webkit-backdrop-filter: var(--glass-overlay-filter);
   box-shadow: var(--shadow-overlay);
 }
 @media (forced-colors: active) {
-  :where(
-    .glass,
-    .surface,
-    .asset-card,
-    .sidebar,
-    .topbar,
-    .modal,
-    .hero,
-    .metrics > div,
-    .metrics > button
-  ) {
+  .glass,
+  .surface,
+  .asset-card,
+  .sidebar,
+  .topbar,
+  .modal,
+  .hero,
+  .metrics > div,
+  .metrics > button {
     background: Canvas;
     color: CanvasText;
     border: 1px solid CanvasText;
     box-shadow: none;
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 }
 @keyframes glass-enter {

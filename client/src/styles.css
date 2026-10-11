@@ -113,8 +113,6 @@ small {
   width: 100%;
   justify-content: center;
 }
-.surface {
-}
 .button {
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
@@ -147,7 +145,7 @@ small {
   color: var(--color-muted);
 }
 .secondary:hover {
-  background: var(--color-surface-soft);
+  background: var(--color-surface-hover);
   border-color: var(--color-surface-soft);
 }
 .subtle {
@@ -158,6 +156,7 @@ small {
   color: var(--color-danger);
 }
 .icon-button {
+  padding: 0;
   border: 0;
   background: transparent;
   border-radius: var(--radius-sm);
@@ -223,6 +222,8 @@ small {
 .sidebar {
   width: 244px;
   position: fixed;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   inset: 0 auto 0 0;
   border-right: 1px solid var(--border);
   display: flex;
@@ -235,12 +236,13 @@ small {
   align-items: center;
   gap: var(--space-3);
   text-decoration: none;
-  padding: 0 var(--space-2);
+  padding: 0;
   font-size: var(--text-title);
   font-weight: 700;
   letter-spacing: -0.7px;
 }
 .brand-icon {
+  flex-shrink: 0;
   width: 38px;
   height: 38px;
   display: inline-flex;
@@ -256,6 +258,9 @@ small {
   letter-spacing: 0;
 }
 .brand-studio {
+  display: block;
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
   font-weight: 400;
   margin-left: 3px;
 }
@@ -329,8 +334,8 @@ small {
   margin-bottom: var(--space-1);
 }
 .nav-item.active {
-  color: var(--purple);
-  background: var(--color-surface-soft);
+  color: var(--color-accent-hover);
+  background: var(--color-selected);
   font-weight: 600;
 }
 .nav-item:hover {
@@ -343,7 +348,7 @@ small {
   align-items: center;
   border-radius: var(--radius-sm);
   background: var(--color-surface-soft);
-  padding: 3px var(--space-1);
+  padding: var(--space-1);
   font-size: var(--text-xs);
   min-width: 20px;
 }
@@ -510,6 +515,8 @@ small {
   box-shadow: var(--shadow-floating);
 }
 .hero > div:first-child {
+  min-width: 0;
+  flex: 1;
   position: relative;
   z-index: 2;
 }
@@ -765,7 +772,7 @@ small {
   color: var(--color-muted);
   background: var(--color-surface-soft);
   font-size: var(--text-xs);
-  padding: 3px var(--space-1);
+  padding: var(--space-1);
   border-radius: var(--radius-sm);
   font-weight: 400;
 }
@@ -836,7 +843,7 @@ small {
     transform var(--duration-normal) var(--ease-fluid);
 }
 .asset-card:hover {
-  box-shadow: var(--shadow-preview);
+  box-shadow: var(--shadow-floating);
   transform: translateY(-2px);
 }
 .card-preview {
@@ -962,7 +969,7 @@ small {
   color: var(--color-muted);
   background: var(--color-surface-soft);
   border: 1px solid var(--color-surface-soft);
-  padding: 3px var(--space-1);
+  padding: var(--space-1);
   border-radius: var(--radius-sm);
 }
 .card-footer {
@@ -1180,7 +1187,7 @@ small {
 }
 .modal::backdrop {
   background: var(--color-scrim);
-  backdrop-filter: blur(calc(var(--glass-blur) / 5));
+  backdrop-filter: var(--glass-backdrop-filter);
 }
 .modal > header {
   display: flex;
@@ -1340,7 +1347,7 @@ small {
   align-items: center;
   border: 1px solid var(--border);
   border-bottom: 0;
-  border-radius: 10px 10px 0 0;
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
   background: var(--color-white);
   padding: var(--space-4) var(--space-4);
   font-size: var(--text-xs);
@@ -1354,7 +1361,7 @@ small {
   justify-content: center;
   padding: var(--space-8);
   border: 1px solid var(--border);
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
 }
 .canvas-stage .preview {
   box-shadow: var(--shadow-preview);
@@ -2359,5 +2366,14 @@ small {
   }
   .hero h2 {
     font-size: clamp(1.75rem, 7vw, 2.5rem);
+  }
+}
+
+.sidebar > * {
+  flex-shrink: 0;
+}
+@media (max-width: 420px) {
+  .brand-studio {
+    display: none;
   }
 }

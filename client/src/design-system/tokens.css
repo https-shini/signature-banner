@@ -78,6 +78,9 @@
     rgb(220 209 247 / 14%) 80%
   );
   --glass-blur: 16px;
+  --glass-filter: blur(var(--glass-blur)) saturate(120%);
+  --glass-overlay-filter: blur(var(--glass-blur));
+  --glass-backdrop-filter: blur(calc(var(--glass-blur) / 5));
   --shadow-panel: inset 0 1px 0 var(--glass-edge), 0 4px 16px rgb(49 35 86 / 5%);
   --shadow-floating: inset 0 1px 0 var(--glass-edge), 0 12px 32px rgb(49 35 86 / 9%);
   --shadow-overlay: inset 0 1px 0 var(--glass-edge), 0 32px 80px rgb(31 20 54 / 24%);
@@ -97,6 +100,9 @@
     --glass-chrome: #faf8ff;
     --glass-overlay: #fff;
     --glass-blur: 0px;
+    --glass-filter: none;
+    --glass-overlay-filter: none;
+    --glass-backdrop-filter: none;
   }
 }
 @media (prefers-reduced-transparency: reduce) {
@@ -105,6 +111,9 @@
     --glass-chrome: #faf8ff;
     --glass-overlay: #fff;
     --glass-blur: 0px;
+    --glass-filter: none;
+    --glass-overlay-filter: none;
+    --glass-backdrop-filter: none;
   }
 }
 /* Also supports an explicit appearance preference without changing content. */
@@ -113,4 +122,7 @@
   --glass-chrome: #faf8ff;
   --glass-overlay: #fff;
   --glass-blur: 0px;
+  --glass-filter: none;
+  --glass-overlay-filter: none;
+  --glass-backdrop-filter: none;
 }
