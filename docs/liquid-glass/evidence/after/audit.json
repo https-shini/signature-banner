@@ -23,22 +23,22 @@
   "performance": [
     {
       "device": "desktop",
-      "navigationMs": 58,
+      "navigationMs": 74,
       "blurSurfaces": 2
     },
     {
       "device": "tablet",
-      "navigationMs": 148,
+      "navigationMs": 52,
       "blurSurfaces": 2
     },
     {
       "device": "mobile",
-      "navigationMs": 180,
+      "navigationMs": 60,
       "blurSurfaces": 2
     },
     {
       "device": "compact",
-      "navigationMs": 56,
+      "navigationMs": 47,
       "blurSurfaces": 2
     }
   ],
@@ -55,6 +55,11 @@
     },
     {
       "name": "editor",
+      "device": "desktop",
+      "violations": []
+    },
+    {
+      "name": "export-entry",
       "device": "desktop",
       "violations": []
     },
@@ -119,6 +124,11 @@
       "violations": []
     },
     {
+      "name": "export-entry",
+      "device": "tablet",
+      "violations": []
+    },
+    {
       "name": "export",
       "device": "tablet",
       "violations": []
@@ -159,6 +169,11 @@
       "violations": []
     },
     {
+      "name": "export-entry",
+      "device": "mobile",
+      "violations": []
+    },
+    {
       "name": "export",
       "device": "mobile",
       "violations": []
@@ -195,6 +210,11 @@
     },
     {
       "name": "editor",
+      "device": "compact",
+      "violations": []
+    },
+    {
+      "name": "export-entry",
       "device": "compact",
       "violations": []
     },
@@ -241,6 +261,11 @@
       "overflow": false
     },
     {
+      "name": "export-entry",
+      "device": "desktop",
+      "overflow": false
+    },
+    {
       "name": "export",
       "device": "desktop",
       "overflow": false
@@ -301,6 +326,11 @@
       "overflow": false
     },
     {
+      "name": "export-entry",
+      "device": "tablet",
+      "overflow": false
+    },
+    {
       "name": "export",
       "device": "tablet",
       "overflow": false
@@ -341,6 +371,11 @@
       "overflow": false
     },
     {
+      "name": "export-entry",
+      "device": "mobile",
+      "overflow": false
+    },
+    {
       "name": "export",
       "device": "mobile",
       "overflow": false
@@ -377,6 +412,11 @@
     },
     {
       "name": "editor",
+      "device": "compact",
+      "overflow": false
+    },
+    {
+      "name": "export-entry",
       "device": "compact",
       "overflow": false
     },

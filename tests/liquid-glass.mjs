@@ -144,6 +144,18 @@ try {
     assert.equal(await firstTab.evaluate((e) => e === document.activeElement), true);
     checks.push('tabs-keyboard-' + device);
     await page.getByRole('button', { name: 'Exportar', exact: true }).click();
+    // Audit an intermediate animation frame too: transient text must remain legible.
+    await page.getByRole('dialog').evaluate((element) => {
+      for (const animation of element.getAnimations()) {
+        animation.pause();
+        const duration = animation.effect?.getTiming().duration;
+        if (typeof duration === 'number') animation.currentTime = duration / 2;
+      }
+    });
+    await capture('export-entry');
+    await page
+      .getByRole('dialog')
+      .evaluate((element) => element.getAnimations().forEach((animation) => animation.finish()));
     await capture('export');
     for (let n = 0; n < 16; n++) {
       await page.keyboard.press('Tab');

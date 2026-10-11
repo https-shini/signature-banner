@@ -47,3 +47,9 @@ Matriz final: 36 capturas em desktop/tablet/mobile/320 px e estados adicionais. 
 Build final aprovado: JS principal 338,55 KB / 105,16 KB gzip; CSS 44,08 KB / 8,08 KB gzip. Biblioteca usa duas superfícies filtradas, sem filtro por cartão. Evidências WebP e JSON, documentação de tokens/componentes/limites e testes disponíveis no CI. Sem P0/P1 conhecidos em aberto no escopo testado. Não foram executados Safari/Firefox reais, leitura assistiva humana ou profiling de hardware móvel; limites descritos em VALIDATION.md.
 
 Entrega preparada como PR em rascunho. Main e produção preservadas; nenhum merge, deploy ou upgrade autorizado/executado nesta tarefa.
+
+## Revisão do CI
+
+O primeiro CI do PR encontrou contraste insuficiente no início da animação de entrada do dialog: o fade de opacidade misturava texto e fundo. A análise local havia ocorrido após a transição. Correção: entrada apenas por deslocamento, com opacidade constante, preservando contraste também durante a animação. Auditoria não foi relaxada; testes afetados e CI repetidos.
+
+Após a correção, 11 verificações E2E e a matriz ampliada de 40 capturas (incluindo quadros intermediários de animação em quatro larguras) passaram localmente. Zero violações, overflow, exceções e solicitações externas. Build final: CSS 44,06 KB / 8,07 KB gzip. Correção enviada ao PR para nova execução completa do CI.

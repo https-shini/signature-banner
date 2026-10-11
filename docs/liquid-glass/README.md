@@ -27,7 +27,7 @@ A ordem de importação é tokens → layouts → materiais. Os materiais usam `
 | Painel      | Branco a 88%, reflexão estática, borda e `--shadow-panel`; sem backdrop filter                                                                           |
 | Chrome      | Branco a 84%, blur 16 px e saturação 120%, `--shadow-floating`; header e sidebar                                                                         |
 | Overlay     | Branco a 96%, blur 16 px, `--shadow-overlay`; dialog e scrim separado                                                                                    |
-| Movimento   | 120/180/280 ms; curva `cubic-bezier(.2,.8,.2,1)`; hover discreto e entrada única do dialog                                                               |
+| Movimento   | 120/180/280 ms; curva `cubic-bezier(.2,.8,.2,1)`; hover discreto e entrada única do dialog por deslocamento, sem fade de texto                           |
 
 Dimensões de canvas, presets de exportação, recorte e posicionamento da arte continuam geométricas; não são convertidas em espaçamento da interface. A paleta e a tipografia dos documentos exportados continuam no modelo compartilhado e não foram redesenhadas.
 
