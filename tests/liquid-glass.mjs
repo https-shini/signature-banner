@@ -181,9 +181,6 @@ try {
       await page.getByRole('heading', { name: heading, exact: true }).waitFor();
       await capture(name);
     }
-    /* Baseline mobile hides the only settings navigation. Record that defect and
- // inspect its view at desktop width before returning to the original viewport.
- */
     await page.getByRole('button', { name: 'Configurações e backup', exact: true }).click();
     await page.getByRole('heading', { name: 'Configurações e backup', exact: true }).waitFor();
     await page.setViewportSize({ width, height });
