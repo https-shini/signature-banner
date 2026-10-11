@@ -4,7 +4,7 @@
 
 Execução local com Node 24, PostgreSQL 17 e Chromium headless; Fastify serve o bundle de produção em loopback. Dados fictícios, schema aleatório e storage isolado. Capturas não contêm dados nem credenciais de produção. A branch parte da main `da1e2af4e5c62652ff012243e7ba20778aff0610`; o commit solicitado `bc415677e409ce82f73d784185bc993ac888f34e` existe no histórico.
 
-Este redesign não foi mesclado nem publicado em produção. Não houve alteração de variáveis da Render, configuração do Supabase, migração de banco ou criação de recursos. A Render permanece com previews desativados; não foi contratada uma preview paga.
+Este registro descreve a validação anterior ao merge. O redesign foi posteriormente integrado à `main` e publicado; veja [PRODUCTION.md](PRODUCTION.md) para a validação real de produção. Não houve alteração de variáveis da Render, configuração do Supabase, migração de banco ou criação de recursos. A Render permanece com previews desativados; não foi contratada uma preview paga.
 
 ## Verificações executadas
 
@@ -53,4 +53,4 @@ MagicPath não expôs ferramentas; foram realizados três estudos CSS locais. `D
 
 ## Entrega
 
-Código integrado, documentação, matriz automatizada no CI e capturas antes/depois na branch de redesign. PR em rascunho para revisão; publicação permanece pendente de aprovação explícita, conforme o briefing.
+Código, documentação, matriz automatizada no CI e capturas antes/depois integrados à `main` pelo PR #6. A autorização posterior de publicação foi executada; resultados e limites em [PRODUCTION.md](PRODUCTION.md).

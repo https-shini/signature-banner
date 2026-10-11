@@ -2,12 +2,12 @@
 
 ## Escopo e inspeção
 
-Branch `feat/liquid-glass-redesign`, base `da1e2af4e5c62652ff012243e7ba20778aff0610`.
+Branch de implementação `feat/liquid-glass-redesign` (integrada e removida), base `da1e2af4e5c62652ff012243e7ba20778aff0610`.
 React 19, TypeScript estrito, Vite 7, Fastify/PostgreSQL/Sharp; CSS próprio, Lucide, dialog nativo. Sem alterações nos contratos do servidor, nos documentos exportados ou nos dados de produção.
 
 `DESIGN.md` e `AGENTS.md` não encontrados no checkout. MagicPath não expõe ferramentas nesta sessão; exploração feita com três variações CSS no Chromium: Aurora (lilás/ciano), Obsidian (escura), Opal (tons quentes). Aurora preserva o destaque roxo e a leitura dos modelos; Obsidian exige uma paleta de texto completa e Opal afasta a identidade existente. Capturas em `evidence/before/direction-*.webp`.
 
-Render: último deploy `live`, commit da base, previews desativados. Consulta dos últimos dez logs de build sem entradas de nível error/fatal. Supabase: esquema existente inspecionado em leitura; bucket `identity-studio` privado, limite 5 MB, PNG normalizado. A API de configuração de Auth retornou HTTP 403; conexão MCP e consulta SQL funcionam. Nenhuma escrita, criação de recurso, mudança de variável, merge ou deploy em produção.
+Render: último deploy `live`, commit da base, previews desativados. Consulta dos últimos dez logs de build sem entradas de nível error/fatal. Supabase: esquema existente inspecionado em leitura; bucket `identity-studio` privado, limite 5 MB, PNG normalizado. A API de configuração de Auth retornou HTTP 403; conexão MCP e consulta SQL funcionam. Na inspeção inicial não houve escrita nem deploy; a publicação posteriormente autorizada está registrada em [PRODUCTION.md](PRODUCTION.md).
 
 ## Linha de base
 
@@ -46,7 +46,7 @@ Matriz final: 36 capturas em desktop/tablet/mobile/320 px e estados adicionais. 
 
 Build final aprovado: JS principal 338,55 KB / 105,16 KB gzip; CSS 44,08 KB / 8,08 KB gzip. Biblioteca usa duas superfícies filtradas, sem filtro por cartão. Evidências WebP e JSON, documentação de tokens/componentes/limites e testes disponíveis no CI. Sem P0/P1 conhecidos em aberto no escopo testado. Não foram executados Safari/Firefox reais, leitura assistiva humana ou profiling de hardware móvel; limites descritos em VALIDATION.md.
 
-Entrega preparada como PR em rascunho. Main e produção preservadas; nenhum merge, deploy ou upgrade autorizado/executado nesta tarefa.
+Entrega inicialmente preparada como PR em rascunho. A instrução posterior autorizou integração e publicação: PR #6 integrado à `main`, branch removida e deploy validado, sem upgrade. Veja [PRODUCTION.md](PRODUCTION.md).
 
 ## Revisão do CI
 

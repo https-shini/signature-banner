@@ -1,5 +1,7 @@
 # Registro de validação
 
+Este registro corresponde à implantação anterior ao redesign. A validação atual do Liquid Glass está em [liquid-glass/PRODUCTION.md](liquid-glass/PRODUCTION.md).
+
 Execução em 11/10/2026, no checkout `/workspace/signature-banner`, com Node 24.19.0, PostgreSQL 17 em Docker e Chromium real. Os testes locais e os testes de produção abaixo têm evidências distintas.
 
 ## Resultados locais
