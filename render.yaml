@@ -1,7 +1,7 @@
 # Um Web Service gratuito serve frontend e API na mesma origem.
 services:
   - type: web
-    name: identity-studio
+    name: identify
     runtime: node
     plan: free
     buildCommand: npm ci --include=dev && npm run build
