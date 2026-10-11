@@ -368,3 +368,117 @@ test('falhas de limpeza no Storage ficam registradas e são recuperadas na próx
     await s.close();
   }
 });
+
+test('portable template and configuration import remap all image roles into the selected context', async () => {
+  const p = await makeProfile('Portabilidade'),
+    target = await makeProfile('Destino portátil');
+  const buffer = await sharp({
+    create: { width: 2000, height: 300, channels: 3, background: '#6644cc' },
+  })
+    .png()
+    .toBuffer();
+  const uploaded = await request('/media', 'POST', {
+    profileId: p.id,
+    name: 'Fundo grande',
+    data: buffer.toString('base64'),
+  });
+  assert.equal(uploaded.statusCode, 201);
+  const image = uploaded.json();
+  assert.equal(image.width, 2000, 'Normalization must preserve useful background resolution');
+  const { portableFile } = await import('../shared/portable');
+  const { forPlatform } = await import('../shared/model');
+  const doc = {
+    ...forPlatform(defaultDocument, 'youtube-banner'),
+    photoId: image.id,
+    backgroundImageId: image.id,
+    logoId: image.id,
+  };
+  const file = portableFile(
+    { name: 'Modelo com fundo', platformId: 'youtube-banner', document: doc },
+    'template',
+    [{ ...image, data: buffer.toString('base64') }].map(
+      ({ id, name, mime, width, height, data }) => ({ id, name, mime, width, height, data }),
+    ),
+  );
+  const imported = await request('/import/portable', 'POST', { profileId: target.id, file });
+  assert.equal(imported.statusCode, 200, imported.body);
+  const t = imported.json().record;
+  assert.equal(imported.json().kind, 'template');
+  assert.notEqual(t.document.backgroundImageId, image.id);
+  assert.equal(t.document.photoId, t.document.backgroundImageId);
+  assert.equal(t.document.logoId, t.document.backgroundImageId);
+  assert.equal((await request('/media?profileId=' + target.id)).json().length, 1);
+  const protectedImage = await request('/media/' + t.document.backgroundImageId, 'DELETE');
+  assert.equal(protectedImage.statusCode, 409);
+  const invalid = await request('/import/portable', 'POST', {
+    profileId: target.id,
+    file: { ...file, version: 99 },
+  });
+  assert.equal(invalid.statusCode, 400);
+  const bad = await request('/import/portable', 'POST', {
+    profileId: target.id,
+    file: {
+      ...file,
+      media: [{ ...file.media[0], data: Buffer.from('<svg/>').toString('base64') }],
+    },
+  });
+  assert.equal(bad.statusCode, 400);
+  assert.equal((await request('/media?profileId=' + target.id)).json().length, 1);
+  const asset = await request('/import/portable', 'POST', {
+    profileId: target.id,
+    file: { ...file, kind: 'configuration' },
+  });
+  assert.equal(asset.statusCode, 200, asset.body);
+  assert.equal(asset.json().kind, 'asset');
+  assert.equal(asset.json().record.platformId, 'youtube-banner');
+  assert.equal(
+    (await request('/assets/' + asset.json().record.id + '/revisions')).json().length,
+    1,
+  );
+  const backup = (await request('/backup')).json<Backup>();
+  const restored = await request('/import', 'POST', backup);
+  assert.equal(restored.statusCode, 200, restored.body);
+  const models = (await request('/templates')).json();
+  assert.ok(
+    models.some(
+      (model: typeof t) =>
+        model.profileId !== target.id &&
+        model.document.backgroundImageId &&
+        model.document.backgroundImageId !== t.document.backgroundImageId,
+    ),
+  );
+});
+
+test('portable import cleans new Storage objects when the database transaction fails', async () => {
+  const profile = await makeProfile('Falha portátil');
+  const id = randomUUID();
+  const png = await sharp({ create: { width: 4, height: 4, channels: 3, background: '#abc' } })
+    .png()
+    .toBuffer();
+  const { portableFile } = await import('../shared/portable');
+  const file = portableFile(
+    {
+      name: 'Falha',
+      platformId: 'banner',
+      document: { ...defaultDocument, backgroundImageId: id },
+    },
+    'template',
+    [{ id, name: 'Fundo', mime: 'image/png', width: 4, height: 4, data: png.toString('base64') }],
+  );
+  const put = storage.put.bind(storage);
+  let uploaded = '';
+  storage.put = async (path, bytes) => {
+    await put(path, bytes);
+    uploaded = path;
+    await store.deleteProfile(profile.id);
+  };
+  try {
+    const response = await request('/import/portable', 'POST', { profileId: profile.id, file });
+    assert.equal(response.statusCode, 404, response.body);
+    assert.ok(uploaded);
+    await assert.rejects(() => storage.get(uploaded));
+    assert.equal((await store.query(`SELECT path FROM ${schema}.storage_cleanup`)).rowCount, 0);
+  } finally {
+    storage.put = put;
+  }
+});

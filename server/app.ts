@@ -16,6 +16,7 @@ import {
 } from '../shared/model';
 import { DomainError, Store } from './store';
 import { normalizeImage } from './images';
+import { portableSchema } from '../shared/portable';
 
 export function createApp(
   store: Store,
@@ -181,6 +182,12 @@ export function createApp(
     const normalized = new Map<string, Awaited<ReturnType<typeof normalizeImage>>>();
     for (const m of b.media) normalized.set(m.id, await normalizeImage(m.data));
     return store.importBackup(b, normalized);
+  });
+  app.post('/api/import/portable', async (req) => {
+    const b = z.object({ profileId: idSchema, file: portableSchema }).strict().parse(req.body);
+    const normalized = new Map<string, Awaited<ReturnType<typeof normalizeImage>>>();
+    for (const m of b.file.media) normalized.set(m.id, await normalizeImage(m.data));
+    return store.importPortable(b.profileId, b.file, normalized);
   });
   app.post('/api/import/legacy', async (req, reply) => {
     const b = z

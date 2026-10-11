@@ -12,7 +12,8 @@ import {
 import { api } from '../api';
 import { Field, ErrorNotice, Empty } from './ui';
 import { DocumentFields } from './DocumentFields';
-import { Preview } from './Preview';
+import { FormatPreview } from './FormatPreview';
+import { adaptDocument, platformWarnings } from '../../../shared/platforms';
 export function Editor({
   asset,
   profile,
@@ -145,9 +146,18 @@ export function Editor({
               {draft.document.width} × {draft.document.height} px
             </span>
           </div>
-          <div className="canvas-stage checker">
-            <Preview document={draft.document} images={images} />
+          <div className="canvas-stage checker format-stage">
+            <FormatPreview
+              document={draft.document}
+              images={images}
+              platformId={draft.platformId}
+            />
           </div>
+          {platformWarnings(draft.platformId, draft.document).map((note) => (
+            <p className="platform-hint" key={note}>
+              {note}
+            </p>
+          ))}
           <div className="canvas-caption">
             <span className="channel-badge">{platform.channel}</span>
             <p>{platform.hint}</p>
@@ -226,6 +236,35 @@ export function Editor({
             id="asset-fields"
             aria-labelledby={`asset-fields-tab-${tab}`}
           >
+            {tab === 'layout' && (
+              <Field
+                label="Adaptar para outro formato"
+                hint="Mantém conteúdo, cores e imagens; aplica dimensões e composição do destino."
+              >
+                <select
+                  value={draft.platformId}
+                  onChange={(e) => {
+                    const id = e.target.value as Asset['platformId'];
+                    if (
+                      window.confirm(
+                        'Adaptar esta composição? O layout será ajustado; conteúdo e imagens serão preservados. Salve para registrar uma nova versão.',
+                      )
+                    )
+                      setDraft({
+                        ...draft,
+                        platformId: id,
+                        document: adaptDocument(draft.document, id),
+                      });
+                  }}
+                >
+                  {platforms.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} · {p.width}×{p.height}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            )}
             {tab === 'content' && (
               <>
                 <Field label="Nome do ativo">

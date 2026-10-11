@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { platforms, platformIds, adaptDocument } from './platforms';
+export { platforms } from './platforms';
 
 export const idSchema = z.uuid();
 const text = (max = 200) => z.string().max(max);
@@ -31,15 +33,25 @@ export const layoutSchema = z
   .object({
     style: z.enum(['studio', 'minimal', 'split']),
     font: z.enum(['sans', 'serif', 'mono']),
-    fontSize: z.number().int().min(12).max(120),
+    fontSize: z.number().int().min(12).max(480),
     textX: z.number().min(0).max(95),
     textY: z.number().min(0).max(95),
     spacing: z.number().min(1).max(2),
-    align: z.enum(['left', 'center']),
+    align: z.enum(['left', 'center', 'right']),
+    textWidth: z.number().min(0).max(100).default(0),
+    showDetails: z.boolean().default(true),
+    photoShape: z.enum(['circle', 'square']).default('circle'),
+    backgroundOpacity: z.number().min(0).max(1).default(1),
+    backgroundZoom: z.number().min(1).max(4).default(1),
+    backgroundOffsetX: z.number().min(-50).max(50).default(0),
+    backgroundOffsetY: z.number().min(-50).max(50).default(0),
+    logoX: z.number().min(0).max(95).default(88),
+    logoY: z.number().min(0).max(95).default(80),
+    logoSize: z.number().min(0).max(80).default(0),
     showAvatar: z.boolean(),
     avatarX: z.number().min(0).max(90),
     avatarY: z.number().min(0).max(90),
-    avatarSize: z.number().min(5).max(80),
+    avatarSize: z.number().min(5).max(100),
     photoZoom: z.number().min(1).max(4).default(1),
     photoOffsetX: z.number().min(-50).max(50).default(0),
     photoOffsetY: z.number().min(-50).max(50).default(0),
@@ -51,12 +63,23 @@ export const layoutSchema = z
   .strict();
 export const documentSchema = z
   .object({
-    composition: z.enum(['banner', 'avatar']).default('banner'),
+    composition: z
+      .enum(['banner', 'avatar', 'post', 'story', 'thumbnail', 'channel-cover'])
+      .default('banner'),
     width: z.number().int().min(64).max(4000),
     height: z.number().int().min(64).max(4000),
     content: contentSchema,
     colors: colorsSchema,
+    exportPreferences: z
+      .object({
+        format: z.enum(['png', 'jpeg', 'webp', 'svg']).default('png'),
+        quality: z.number().min(0.3).max(1).default(0.92),
+        scale: z.number().int().min(1).max(3).default(1),
+      })
+      .strict()
+      .default({ format: 'png', quality: 0.92, scale: 1 }),
     layout: layoutSchema,
+    backgroundImageId: idSchema.nullable().default(null),
     photoId: idSchema.nullable(),
     logoId: idSchema.nullable(),
   })
@@ -64,45 +87,7 @@ export const documentSchema = z
 export const profileInputSchema = z
   .object({ name: z.string().trim().min(1).max(80), description: text(200), kit: documentSchema })
   .strict();
-export const platforms = [
-  {
-    id: 'signature',
-    name: 'Assinatura de e-mail',
-    channel: 'Gmail',
-    kind: 'signature',
-    width: 600,
-    height: 180,
-    hint: 'HTML com links ou imagem. O Gmail pode redimensionar imagens; teste no seu cliente.',
-  },
-  {
-    id: 'linkedin',
-    name: 'Capa do LinkedIn',
-    channel: 'LinkedIn',
-    kind: 'banner',
-    width: 1584,
-    height: 396,
-    hint: '1584 × 396 px · PNG/JPEG · até 8 MB. Evite conteúdo essencial no canto inferior esquerdo.',
-  },
-  {
-    id: 'banner',
-    name: 'Banner profissional',
-    channel: 'Livre',
-    kind: 'banner',
-    width: 1200,
-    height: 320,
-    hint: '1200 × 320 px · dimensões personalizáveis.',
-  },
-  {
-    id: 'avatar',
-    name: 'Foto de perfil',
-    channel: 'Multiplataforma',
-    kind: 'avatar',
-    width: 800,
-    height: 800,
-    hint: '800 × 800 px · composição quadrada para recorte circular.',
-  },
-] as const;
-export const platformIdSchema = z.enum(['signature', 'linkedin', 'banner', 'avatar']);
+export const platformIdSchema = z.enum(platformIds);
 export const kindSchema = z.enum(['signature', 'banner', 'avatar']);
 export const assetInputSchema = z
   .object({
@@ -223,6 +208,8 @@ export type Backup = z.infer<typeof backupSchema>;
 
 export const defaultDocument: AssetDocument = {
   composition: 'banner',
+  backgroundImageId: null,
+  exportPreferences: { format: 'png', quality: 0.92, scale: 1 },
   width: 1200,
   height: 320,
   content: {
@@ -244,6 +231,16 @@ export const defaultDocument: AssetDocument = {
     textY: 19,
     spacing: 1.35,
     align: 'left',
+    textWidth: 0,
+    showDetails: true,
+    photoShape: 'circle',
+    backgroundOpacity: 1,
+    backgroundZoom: 1,
+    backgroundOffsetX: 0,
+    backgroundOffsetY: 0,
+    logoX: 88,
+    logoY: 80,
+    logoSize: 0,
     showAvatar: true,
     avatarX: 5,
     avatarY: 26,
@@ -263,24 +260,9 @@ export function forPlatform(
   kit: AssetDocument,
   platformId: z.infer<typeof platformIdSchema>,
 ): AssetDocument {
-  const platform = platforms.find((p) => p.id === platformId)!;
-  const d = structuredClone(kit);
-  d.width = platform.width;
-  d.height = platform.height;
-  d.composition = platform.kind === 'avatar' ? 'avatar' : 'banner';
-  d.layout.fontSize = platformId === 'signature' ? 22 : platformId === 'linkedin' ? 44 : 36;
-  if (platformId === 'avatar') {
-    d.layout = {
-      ...d.layout,
-      showAvatar: true,
-      showQr: false,
-      avatarX: 15,
-      avatarY: 15,
-      avatarSize: 70,
-    };
-  }
-  return d;
+  return adaptDocument(kit, platformId);
 }
+
 export const systemTemplates = [
   {
     id: 'system-studio',
@@ -332,15 +314,25 @@ export const systemTemplates = [
     platformId: 'avatar' as const,
     document: forPlatform(defaultDocument, 'avatar'),
   },
+  ...platforms
+    .filter((p) => !['signature', 'linkedin', 'banner', 'avatar'].includes(p.id))
+    .map((p) => ({
+      id: 'system-' + p.id,
+      name: p.name,
+      subtitle: p.hint,
+      platformId: p.id,
+      document: forPlatform(defaultDocument, p.id),
+    })),
 ];
 
 // Migração de dados, sem executar o JavaScript ou HTML do projeto anterior.
 const legacySchema = z
   .object({
     _type: z.literal('signature-banner-config'),
-    version: z.literal(3),
+    version: z.union([z.literal(3), z.literal(4)]),
     content: z
       .object({
+        status: text(200).optional(),
         eyebrow: text(100).optional(),
         name: text(100),
         role: text(150).optional(),
@@ -364,7 +356,11 @@ const legacySchema = z
       .strict()
       .optional(),
     layout: z
-      .object({ showQR: z.boolean().optional(), cursor: z.boolean().optional() })
+      .object({
+        showStatus: z.boolean().optional(),
+        showQR: z.boolean().optional(),
+        cursor: z.boolean().optional(),
+      })
       .strict()
       .optional(),
     export: z
@@ -390,7 +386,14 @@ export function migrateLegacy(value: unknown): AssetDocument {
     role: c.role ?? '',
     company: c.empresa ?? '',
     eyebrow: c.eyebrow ?? '',
-    tagline: (c.tagline ?? '').replace(/<br\s*\/?\s*>/gi, '\n'),
+    tagline: [
+      c.tagline ?? '',
+      c.specs ?? '',
+      old.layout?.showStatus !== false ? (c.status ?? '') : '',
+    ]
+      .filter(Boolean)
+      .join('\n')
+      .replace(/<br\s*\/?\s*>/gi, '\n'),
     email: c.email ?? '',
     site: c.site ? (/^https?:\/\//i.test(c.site) ? c.site : `https://${c.site}`) : '',
     qrUrl: c.qrUrl ?? '',
@@ -415,5 +418,17 @@ export function migrateLegacy(value: unknown): AssetDocument {
     if (color) d.colors[to] = color;
   }
   d.layout.showQr = old.layout?.showQR ?? true;
+  if (old.export?.width && old.export?.height) {
+    const ratio = old.export.width / old.export.height;
+    d.width = 1200;
+    d.height = Math.round(1200 / ratio);
+    if (old.export.width === 1584 && old.export.height === 396) {
+      d.width = 1584;
+      d.height = 396;
+    }
+    d.exportPreferences.format = old.export.format ?? 'png';
+    d.exportPreferences.quality = old.export.quality ?? 0.92;
+  }
+
   return documentSchema.parse(d);
 }

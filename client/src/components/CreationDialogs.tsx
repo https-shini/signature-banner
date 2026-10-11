@@ -47,13 +47,17 @@ export function NewAsset({
             const template = all.find((t) => t.id === templateId);
             let document = forPlatform(profile.kit, platformId);
             if (template) {
-              document = forPlatform(template.document, platformId);
+              document =
+                template.platformId === platformId
+                  ? structuredClone(template.document)
+                  : forPlatform(template.document, platformId);
               if (template.id.startsWith('system-'))
                 document = {
                   ...document,
                   content: structuredClone(profile.kit.content),
                   photoId: profile.kit.photoId,
                   logoId: profile.kit.logoId,
+                  backgroundImageId: profile.kit.backgroundImageId,
                 };
             }
             await onCreate({ name, platformId, document });
@@ -100,6 +104,13 @@ export function NewAsset({
             ))}
           </select>
         </Field>
+        <p className="platform-hint">{platforms.find((p) => p.id === platformId)?.hint}</p>
+        {templateId && all.find((t) => t.id === templateId)?.platformId !== platformId && (
+          <p className="platform-hint">
+            O modelo será adaptado ao formato de destino. Conteúdo e imagens permanecem; a
+            composição e as dimensões mudam.
+          </p>
+        )}
         {error && <ErrorNotice message={error} />}
         <div className="modal-actions">
           <Button type="button" variant="secondary" disabled={busy} onClick={onClose}>

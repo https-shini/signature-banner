@@ -23,6 +23,7 @@ import {
   type Template,
 } from '../shared/model';
 import type { ImageStorage } from './storage';
+import { portableSchema, type Portable } from '../shared/portable';
 export class DomainError extends Error {
   constructor(
     public status: number,
@@ -177,7 +178,7 @@ export class Store {
     return this.one<Profile>('profiles', id);
   }
   async createProfile(input: ProfileInput) {
-    if (input.kit.photoId || input.kit.logoId)
+    if (input.kit.photoId || input.kit.logoId || input.kit.backgroundImageId)
       fail(400, 'Um novo perfil deve começar sem imagens de outro contexto.');
     const now = new Date().toISOString(),
       p: Profile = { ...input, id: randomUUID(), createdAt: now, updatedAt: now };
@@ -211,7 +212,7 @@ export class Store {
   }
   private async validateImages(profileId: string, d: AssetDocument) {
     await this.profile(profileId);
-    for (const id of [d.photoId, d.logoId])
+    for (const id of [d.photoId, d.logoId, d.backgroundImageId])
       if (id && (await this.one<Media>('media', id, true)).profileId !== profileId)
         fail(400, 'A imagem pertence a outro perfil.');
   }
@@ -411,7 +412,8 @@ export class Store {
   async deleteMedia(id: string) {
     await this.transaction(async (tx) => {
       const m = await tx.one<Media>('media', id, true),
-        uses = (d: AssetDocument) => d.photoId === id || d.logoId === id;
+        uses = (d: AssetDocument) =>
+          d.photoId === id || d.logoId === id || d.backgroundImageId === id;
       if (
         uses((await tx.profile(m.profileId)).kit) ||
         (await tx.assets(m.profileId)).some((a) => uses(a.document)) ||
@@ -426,6 +428,63 @@ export class Store {
       await tx.query(`DELETE FROM ${this.schema}.media WHERE id=$1`, [id]);
     });
     await this.collectStorage().catch(() => undefined);
+  }
+  async importPortable(
+    profileId: string,
+    value: Portable,
+    normalized: Map<string, { bytes: Buffer; width: number; height: number }>,
+  ) {
+    const source = portableSchema.parse(value);
+    await this.profile(profileId);
+    const mapping = new Map(source.media.map((m) => [m.id, randomUUID()]));
+    const document = {
+      ...source.document,
+      photoId: source.document.photoId ? mapping.get(source.document.photoId)! : null,
+      logoId: source.document.logoId ? mapping.get(source.document.logoId)! : null,
+      backgroundImageId: source.document.backgroundImageId
+        ? mapping.get(source.document.backgroundImageId)!
+        : null,
+    };
+    const uploaded: string[] = [];
+    try {
+      const images: Media[] = [];
+      for (const image of source.media) {
+        const n = normalized.get(image.id);
+        if (!n) fail(400, 'Imagem não normalizada.');
+        const m: Media = {
+          id: mapping.get(image.id)!,
+          profileId,
+          name: image.name,
+          mime: 'image/png',
+          width: n!.width,
+          height: n!.height,
+          createdAt: new Date().toISOString(),
+        };
+        const path = this.imagePath(m);
+        await this.storage.put(path, n!.bytes);
+        uploaded.push(path);
+        images.push(m);
+      }
+      return await this.transaction(async (tx) => {
+        await tx.one<Profile>('profiles', profileId, true);
+        for (const m of images)
+          await tx.query(`INSERT INTO ${this.schema}.media VALUES ($1,$2,$3)`, [
+            m.id,
+            profileId,
+            m,
+          ]);
+        const input = { profileId, name: source.name, platformId: source.platformId, document };
+        return source.kind === 'template'
+          ? { kind: 'template' as const, record: await tx.createTemplate(input) }
+          : {
+              kind: 'asset' as const,
+              record: await tx.createAsset({ ...input, tags: ['Importado'], favorite: false }),
+            };
+      });
+    } catch (e) {
+      await this.cleanupPaths(uploaded);
+      throw e;
+    }
   }
   async backup(): Promise<Backup> {
     return this.transaction(async (tx) => {
@@ -466,11 +525,12 @@ export class Store {
       owners = new Map(b.media.map((m) => [m.id, m.profileId]));
     const mapDoc = (profileId: string, d: AssetDocument) => {
       if (!profiles.has(profileId)) fail(400, 'Perfil ausente no backup.');
-      for (const id of [d.photoId, d.logoId])
+      for (const id of [d.photoId, d.logoId, d.backgroundImageId])
         if (id && owners.get(id) !== profileId)
           fail(400, 'Referência de imagem inválida no backup.');
       return {
         ...d,
+        backgroundImageId: d.backgroundImageId ? media.get(d.backgroundImageId)! : null,
         photoId: d.photoId ? media.get(d.photoId)! : null,
         logoId: d.logoId ? media.get(d.logoId)! : null,
       };

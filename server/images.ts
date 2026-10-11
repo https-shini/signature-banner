@@ -15,11 +15,16 @@ export async function normalizeImage(data: string) {
     const metadata = await pipeline.metadata();
     if (!['png', 'jpeg', 'webp'].includes(metadata.format ?? '') || (metadata.pages ?? 1) > 1)
       throw new Error('unsupported');
-    const { data: bytes, info } = await pipeline
-      .rotate()
-      .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
-      .png()
-      .toBuffer({ resolveWithObject: true });
+    const render = (size: number) =>
+      pipeline
+        .clone()
+        .rotate()
+        .resize({ width: size, height: size, fit: 'inside', withoutEnlargement: true })
+        .png()
+        .toBuffer({ resolveWithObject: true });
+    const highResolution = await render(4000);
+    const { data: bytes, info } =
+      highResolution.data.length <= 5 * 1024 * 1024 ? highResolution : await render(1600);
     if (bytes.length > 5 * 1024 * 1024)
       throw new DomainError(413, 'Imagem normalizada excede 5 MB.');
     return { bytes, width: info.width, height: info.height };

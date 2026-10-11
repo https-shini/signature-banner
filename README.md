@@ -74,3 +74,7 @@ Aplicação publicada em **[identify-efsf.onrender.com](https://identify-efsf.on
 ## Licença
 
 MIT. O gerador de QR Code de Kazuhiko Arase foi reaproveitado com seus avisos e licença preservados em `shared/qrcode.js` e `LICENSE`.
+
+## Formatos e arquivos editáveis
+
+O catálogo agora inclui Gmail, LinkedIn pessoal/página, Instagram e YouTube, com 15 presets e composições específicas. Modelos podem ser editados e transportados com imagens; configurações portáteis importam no contexto selecionado. Consulte [formatos, personalização, interoperabilidade e limites](docs/FORMATS.md).

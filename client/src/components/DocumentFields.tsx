@@ -1,12 +1,10 @@
 import type { AssetDocument, Media } from '../../../shared/model';
 import { Field } from './ui';
-const palettes = [
-  ['Violeta', '#101727', '#f8fafc', '#a8b1c4', '#8b79f6'],
-  ['Papel', '#ffffff', '#182235', '#64748b', '#604ae8'],
-  ['Floresta', '#123b36', '#f0fdfa', '#acd4c8', '#8fdfba'],
-  ['Crimson', '#17121a', '#fff1f2', '#baa8b3', '#fb7185'],
-  ['Areia', '#f2eadf', '#372b20', '#78644f', '#ad6039'],
-];
+import {
+  palettes,
+  advancedLayoutControls,
+  backgroundControls,
+} from '../../../shared/customization';
 export function DocumentFields({
   tab,
   document: d,
@@ -22,6 +20,19 @@ export function DocumentFields({
     onChange({ ...d, content: { ...d.content, [key]: value } });
   const layout = (key: keyof AssetDocument['layout'], value: unknown) =>
     onChange({ ...d, layout: { ...d.layout, [key]: value } });
+  const ranges = (controls: typeof advancedLayoutControls) =>
+    controls.map((c) => (
+      <Field key={c.key} label={`${c.label} · ${d.layout[c.key]}${c.unit ?? ''}`}>
+        <input
+          type="range"
+          min={c.min}
+          max={c.max}
+          step={c.step ?? 1}
+          value={d.layout[c.key]}
+          onChange={(e) => layout(c.key, Number(e.target.value))}
+        />
+      </Field>
+    ));
   if (tab === 'content')
     return (
       <div className="form-stack">
@@ -146,7 +157,7 @@ export function DocumentFields({
           <input
             type="range"
             min="12"
-            max="120"
+            max="480"
             value={d.layout.fontSize}
             onChange={(e) => layout('fontSize', Number(e.target.value))}
           />
@@ -187,6 +198,7 @@ export function DocumentFields({
           <select value={d.layout.align} onChange={(e) => layout('align', e.target.value)}>
             <option value="left">À esquerda</option>
             <option value="center">Centralizado</option>
+            <option value="right">À direita</option>
           </select>
         </Field>
         {[
@@ -227,7 +239,7 @@ export function DocumentFields({
         {[
           ['avatarX', 'Foto · posição horizontal', 0, 90],
           ['avatarY', 'Foto · posição vertical', 0, 90],
-          ['avatarSize', 'Foto · tamanho', 5, 80],
+          ['avatarSize', 'Foto · tamanho', 5, 100],
           ['qrX', 'QR · posição horizontal', 0, 90],
           ['qrY', 'QR · posição vertical', 0, 90],
           ['qrSize', 'QR · tamanho', 10, 80],
@@ -242,6 +254,73 @@ export function DocumentFields({
             />
           </Field>
         ))}
+        <label className="check-field">
+          <input
+            type="checkbox"
+            checked={d.layout.showDetails}
+            onChange={(e) => layout('showDetails', e.target.checked)}
+          />{' '}
+          Mostrar cargo, apresentação e contatos
+        </label>
+        <details className="advanced-fields">
+          <summary>Composição avançada e logotipo</summary>
+          {ranges(advancedLayoutControls)}
+        </details>
+        <details className="advanced-fields">
+          <summary>Preferências de exportação</summary>
+          <Field label="Formato preferido">
+            <select
+              value={d.exportPreferences.format}
+              onChange={(e) =>
+                onChange({
+                  ...d,
+                  exportPreferences: {
+                    ...d.exportPreferences,
+                    format: e.target.value as AssetDocument['exportPreferences']['format'],
+                  },
+                })
+              }
+            >
+              {['png', 'jpeg', 'webp', 'svg'].map((f) => (
+                <option key={f} value={f}>
+                  {f.toUpperCase()}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Escala preferida">
+            <select
+              value={d.exportPreferences.scale}
+              onChange={(e) =>
+                onChange({
+                  ...d,
+                  exportPreferences: { ...d.exportPreferences, scale: Number(e.target.value) },
+                })
+              }
+            >
+              {[1, 2, 3].map((scale) => (
+                <option key={scale} value={scale}>
+                  {scale}×
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label={`Qualidade preferida · ${Math.round(d.exportPreferences.quality * 100)}%`}>
+            <input
+              type="range"
+              min=".3"
+              max="1"
+              step=".01"
+              value={d.exportPreferences.quality}
+              onChange={(e) =>
+                onChange({
+                  ...d,
+                  exportPreferences: { ...d.exportPreferences, quality: Number(e.target.value) },
+                })
+              }
+            />
+          </Field>
+        </details>
         <p className="muted small">
           Posições são percentuais da tela. O tamanho de foto e QR usa o menor lado. Textos longos
           são quebrados e podem receber reticências; confira o preview.
@@ -254,13 +333,24 @@ export function DocumentFields({
         Use fotos e logos da biblioteca deste perfil. As imagens são incorporadas ao arquivo
         exportado.
       </p>
-      {(['photoId', 'logoId'] as const).map((key) => (
-        <Field key={key} label={key === 'photoId' ? 'Foto de perfil' : 'Logotipo'}>
+      {(['photoId', 'logoId', 'backgroundImageId'] as const).map((key) => (
+        <Field
+          key={key}
+          label={
+            key === 'photoId' ? 'Foto de perfil' : key === 'logoId' ? 'Logotipo' : 'Imagem de fundo'
+          }
+        >
           <select
             value={d[key] ?? ''}
             onChange={(e) => onChange({ ...d, [key]: e.target.value || null })}
           >
-            <option value="">{key === 'photoId' ? 'Usar monograma' : 'Sem logotipo'}</option>
+            <option value="">
+              {key === 'photoId'
+                ? 'Usar monograma'
+                : key === 'logoId'
+                  ? 'Sem logotipo'
+                  : 'Usar cor de fundo'}
+            </option>
             {media.map((m) => (
               <option value={m.id} key={m.id}>
                 {m.name} · {m.width}×{m.height}
@@ -269,6 +359,29 @@ export function DocumentFields({
           </select>
         </Field>
       ))}
+      <Field label="Recorte da foto">
+        <select value={d.layout.photoShape} onChange={(e) => layout('photoShape', e.target.value)}>
+          <option value="circle">Circular</option>
+          <option value="square">Quadrado</option>
+        </select>
+      </Field>
+      {d.backgroundImageId && (
+        <details className="advanced-fields" open>
+          <summary>Enquadramento do fundo</summary>
+          {ranges(backgroundControls)}
+        </details>
+      )}
+      {d.photoId &&
+        media.find(
+          (m) =>
+            m.id === d.photoId &&
+            Math.min(m.width, m.height) <
+              ((Math.min(d.width, d.height) * d.layout.avatarSize) / 100) * d.layout.photoZoom,
+        ) && (
+          <p className="platform-hint">
+            A imagem pode perder nitidez neste tamanho e zoom. Prefira uma foto com maior resolução.
+          </p>
+        )}
       {d.photoId && (
         <>
           {[

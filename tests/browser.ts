@@ -257,6 +257,152 @@ try {
   );
   assert.deepEqual(accessibility.violations, [], 'Acessibilidade WCAG AA');
   checks.push('acessibilidade WCAG AA');
+  await page
+    .getByLabel('Contexto ativo', { exact: true })
+    .selectOption(
+      (await store.profiles()).find((p) => p.name === 'Perfil principal')?.id ??
+        (await store.profiles())[0].id,
+    );
+  const { platforms: catalogue } = await import('../shared/model');
+  await check(
+    'formatos Gmail, LinkedIn, Instagram e YouTube criam composições e exportam PNG nas dimensões corretas',
+    async () => {
+      for (const id of [
+        'gmail-banner',
+        'linkedin',
+        'linkedin-avatar',
+        'instagram-story',
+        'youtube-banner',
+        'youtube-thumbnail',
+      ] as const) {
+        const preset = catalogue.find((p) => p.id === id)!;
+        await page.getByRole('button', { name: 'Criar ativo', exact: true }).first().click();
+        await page.getByLabel('Nome do ativo', { exact: true }).fill('Formato ' + id);
+        await page.getByLabel('Plataforma e finalidade').selectOption(id);
+        await page
+          .getByRole('dialog')
+          .getByRole('button', { name: 'Criar ativo', exact: true })
+          .click();
+        await page.getByRole('heading', { name: 'Formato ' + id, exact: true }).waitFor();
+        if (['linkedin-avatar', 'instagram-story', 'youtube-banner'].includes(id)) {
+          const profileId = await page.getByLabel('Contexto ativo', { exact: true }).inputValue();
+          const media = (await store.medias(profileId))[0];
+          if (media) {
+            await page.getByRole('tab', { name: 'Mídia', exact: true }).click();
+            await page
+              .getByLabel(id === 'linkedin-avatar' ? 'Foto de perfil' : 'Imagem de fundo', {
+                exact: true,
+              })
+              .selectOption(media.id);
+            await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+            await page.getByText('Salvo · v2', { exact: true }).waitFor();
+          }
+        }
+        if (preset.safeArea) {
+          await page.getByLabel('Área segura', { exact: true }).check();
+          assert.equal(await page.locator('.safe-area-guide').count(), 1);
+        }
+        if (preset.circular) {
+          await page.getByLabel('Recorte circular', { exact: true }).check();
+          assert.equal(await page.locator('.format-preview-frame.circular').count(), 1);
+        }
+        await page.getByLabel('Zoom da prévia').selectOption('2');
+        await page.getByRole('button', { name: 'Exportar', exact: true }).click();
+        const downloaded = page.waitForEvent('download');
+        await page
+          .getByRole('dialog')
+          .getByRole('button', { name: 'Exportar PNG', exact: true })
+          .click();
+        const file = await downloaded;
+        const m = await sharp(await readFile((await file.path())!)).metadata();
+        assert.equal(m.width, preset.width);
+        assert.equal(m.height, preset.height);
+        await page.getByRole('dialog').getByRole('button', { name: 'Fechar', exact: true }).click();
+        await page.getByRole('button', { name: 'Voltar para ativos' }).click();
+      }
+    },
+  );
+  await check('adaptação entre formatos preserva conteúdo e registra uma nova versão', async () => {
+    await page.getByRole('button', { name: 'Editar Formato gmail-banner', exact: true }).click();
+    const name = await page.getByLabel('Nome profissional', { exact: true }).inputValue();
+    await page.getByRole('tab', { name: 'Layout', exact: true }).click();
+    await page.getByLabel('Adaptar para outro formato').selectOption('instagram-portrait');
+    await page.getByRole('button', { name: 'Salvar alterações', exact: true }).click();
+    await page.getByText('Salvo · v2', { exact: true }).waitFor();
+    await page.getByRole('tab', { name: 'Conteúdo', exact: true }).click();
+    assert.equal(await page.getByLabel('Nome profissional', { exact: true }).inputValue(), name);
+    await page.getByRole('button', { name: 'Salvar como modelo' }).click();
+    await page.getByRole('button', { name: 'Voltar para ativos' }).click();
+  });
+  await check(
+    'modelos editam composição e preferências e reabrem sem perda do layout',
+    async () => {
+      await page.getByRole('button', { name: 'Modelos', exact: true }).click();
+      await page.getByLabel('Buscar modelos').fill('Modelo do navegador');
+      const card = page
+        .locator('.template-card')
+        .filter({ has: page.getByRole('heading', { name: 'Modelo do navegador', exact: true }) })
+        .last();
+      await card.getByRole('button', { name: 'Editar modelo', exact: true }).click();
+      const dialog = page.getByRole('dialog');
+      await dialog.getByRole('tab', { name: 'Layout', exact: true }).click();
+      await dialog.getByLabel('Largura do projeto', { exact: true }).fill('1000');
+      await dialog.getByLabel('Altura do projeto', { exact: true }).fill('1200');
+      await dialog.getByText('Preferências de exportação', { exact: true }).click();
+      await dialog.getByLabel('Formato preferido').selectOption('jpeg');
+      await dialog.getByRole('button', { name: 'Salvar modelo', exact: true }).click();
+      await dialog.getByText('Modelo atualizado.', { exact: true }).waitFor();
+      await audit('template-editor');
+      await page.setViewportSize({ width: 390, height: 844 });
+      await audit('template-editor-mobile');
+      assert.equal(
+        await page.evaluate(() => document.documentElement.scrollWidth > innerWidth),
+        false,
+      );
+      await page.setViewportSize({ width: 1440, height: 1050 });
+      await dialog.getByRole('button', { name: 'Fechar editor', exact: true }).click();
+      await card.getByRole('button', { name: 'Usar modelo', exact: true }).click();
+      await page.getByLabel('Nome do ativo', { exact: true }).fill('Modelo sem perda');
+      await page
+        .getByRole('dialog')
+        .getByRole('button', { name: 'Criar ativo', exact: true })
+        .click();
+      await page.getByRole('heading', { name: 'Modelo sem perda', exact: true }).waitFor();
+      await page.getByRole('tab', { name: 'Layout', exact: true }).click();
+      assert.equal(
+        await page.getByLabel('Largura do projeto', { exact: true }).inputValue(),
+        '1000',
+      );
+      assert.equal(
+        await page.getByLabel('Altura do projeto', { exact: true }).inputValue(),
+        '1200',
+      );
+      await page.getByRole('button', { name: 'Exportar', exact: true }).click();
+      assert.equal(
+        await page.getByRole('dialog').getByLabel('Formato', { exact: true }).inputValue(),
+        'jpeg',
+      );
+      const downloaded = page.waitForEvent('download');
+      await page
+        .getByRole('dialog')
+        .getByRole('button', { name: 'Exportar configurações JSON', exact: true })
+        .click();
+      const file = await downloaded;
+      const portable = JSON.parse(await readFile((await file.path())!, 'utf8'));
+      assert.equal(portable.kind, 'configuration');
+      assert.equal(portable.document.width, 1000);
+      assert.equal(portable.document.exportPreferences.format, 'jpeg');
+      await page.getByRole('dialog').getByRole('button', { name: 'Fechar', exact: true }).click();
+      await page.getByRole('button', { name: 'Voltar para ativos' }).click();
+      await page.locator('input[type=file][accept=".json,application/json"]').setInputFiles({
+        name: 'config.json',
+        mimeType: 'application/json',
+        buffer: Buffer.from(JSON.stringify(portable)),
+      });
+      await page.getByRole('heading', { name: 'Modelo sem perda', exact: true }).waitFor();
+      await page.getByRole('button', { name: 'Voltar para ativos' }).click();
+    },
+  );
   assert.deepEqual(errors, [], 'Exceções de navegador');
   assert.deepEqual(external, [], 'Dependências externas não esperadas');
   console.log(

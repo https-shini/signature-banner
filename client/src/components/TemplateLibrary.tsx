@@ -1,3 +1,6 @@
+import { useState } from 'react';
+import { platforms } from '../../../shared/platforms';
+import { Field } from './ui';
 import { Button, PageHeading, GlassSurface } from '../design-system';
 import { ArrowUpRight, Copy, Settings2, Trash2 } from 'lucide-react';
 import { systemTemplates, type Profile, type Template } from '../../../shared/model';
@@ -9,6 +12,9 @@ export function TemplateLibrary({
   images,
   templates,
   busy,
+  onImport,
+  onEdit,
+  onExport,
   onUse,
   onDuplicate,
   onRename,
@@ -18,11 +24,19 @@ export function TemplateLibrary({
   images: Record<string, string>;
   templates: Template[];
   busy: boolean;
+  onImport: () => void;
+  onEdit: (t: Template) => void;
+  onExport: (t: Template) => void;
   onUse: (t: TemplateChoice) => void;
   onDuplicate: (t: Template) => void;
   onRename: (t: Template) => void;
   onDelete: (t: Template) => void;
 }) {
+  const [channel, setChannel] = useState('all'),
+    [search, setSearch] = useState('');
+  const matches = (t: TemplateChoice) =>
+    (channel === 'all' || platforms.find((p) => p.id === t.platformId)?.channel === channel) &&
+    t.name.toLocaleLowerCase().includes(search.toLocaleLowerCase());
   return (
     <>
       <PageHeading
@@ -33,15 +47,41 @@ export function TemplateLibrary({
           </>
         }
         description={<>Comece com uma composição pronta. Termine com algo só seu.</>}
-        actions={<span className="pill">{systemTemplates.length + templates.length} modelos</span>}
+        actions={
+          <div className="row">
+            <span className="pill">{systemTemplates.length + templates.length} modelos</span>
+            <Button variant="secondary" disabled={busy} onClick={onImport}>
+              Importar modelo JSON
+            </Button>
+          </div>
+        }
       />
+      <div className="two-fields">
+        <Field label="Buscar modelos">
+          <input value={search} onChange={(e) => setSearch(e.target.value)} />
+        </Field>
+        <Field label="Filtrar modelos por plataforma">
+          <select value={channel} onChange={(e) => setChannel(e.target.value)}>
+            <option value="all">Todas as plataformas</option>
+            {[...new Set(platforms.map((p) => p.channel))].map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
       <h2 className="subheading">
         Selecionados para você <span className="pill">Studio</span>
       </h2>
       <div className="template-grid">
-        {systemTemplates.map((t) => (
+        {systemTemplates.filter(matches).map((t) => (
           <GlassSurface as="article" level="panel" className="template-card surface" key={t.id}>
-            <div className={'template-preview ' + (t.platformId === 'avatar' ? 'square' : '')}>
+            <div
+              className={
+                'template-preview ' + (t.document.composition === 'avatar' ? 'square' : '')
+              }
+            >
               <Preview
                 document={{
                   ...t.document,
@@ -72,7 +112,7 @@ export function TemplateLibrary({
         />
       ) : (
         <div className="template-grid">
-          {templates.map((t) => (
+          {templates.filter(matches).map((t) => (
             <GlassSurface as="article" level="panel" className="template-card surface" key={t.id}>
               <div className="template-preview">
                 <Preview document={t.document} images={images} />
@@ -82,6 +122,12 @@ export function TemplateLibrary({
                 <div className="row">
                   <Button variant="secondary" onClick={() => onUse(t)}>
                     Usar modelo
+                  </Button>
+                  <Button variant="secondary" disabled={busy} onClick={() => onEdit(t)}>
+                    Editar modelo
+                  </Button>
+                  <Button variant="secondary" disabled={busy} onClick={() => onExport(t)}>
+                    Modelo JSON
                   </Button>
                   <button
                     className="icon-button"

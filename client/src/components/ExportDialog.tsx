@@ -2,6 +2,7 @@ import { Button } from '../design-system';
 import { useState } from 'react';
 import { Download, Check, LockKeyhole } from 'lucide-react';
 import { exportSchema, platforms, type Asset, type ExportOptions } from '../../../shared/model';
+import { platformWarnings } from '../../../shared/platforms';
 import { exportImage } from '../../../shared/render';
 import { download, filename } from '../api';
 import { Modal, Field, ErrorNotice } from './ui';
@@ -11,16 +12,21 @@ export function ExportDialog({
   images,
   onClose,
   onJson,
+  onConfiguration,
 }: {
   asset: Asset;
   images: Record<string, string>;
   onClose: () => void;
+  onConfiguration: (asset: Asset) => void;
   onJson: (asset: Asset) => Promise<void>;
 }) {
-  const [format, setFormat] = useState<ExportOptions['format']>('png'),
-    [width, setWidth] = useState(asset.document.width),
-    [height, setHeight] = useState(asset.document.height),
-    [quality, setQuality] = useState(0.92),
+  const [format, setFormat] = useState<ExportOptions['format']>(
+      asset.document.exportPreferences.format,
+    ),
+    [width, setWidth] = useState(asset.document.width * asset.document.exportPreferences.scale),
+    [height, setHeight] = useState(asset.document.height * asset.document.exportPreferences.scale),
+    [scale, setScale] = useState(String(asset.document.exportPreferences.scale)),
+    [quality, setQuality] = useState(asset.document.exportPreferences.quality),
     [preserve, setPreserve] = useState(true),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
@@ -28,6 +34,7 @@ export function ExportDialog({
   const result = exportSchema.safeParse({ format, width, height, quality });
   const platform = platforms.find((p) => p.id === asset.platformId)!;
   function changeWidth(w: number) {
+    setScale('custom');
     setWidth(w);
     if (preserve) setHeight(Math.round((w * asset.document.height) / asset.document.width));
     setDone(false);
@@ -40,12 +47,12 @@ export function ExportDialog({
       const options = exportSchema.parse({ format, width, height, quality });
       const blob = await exportImage(asset.document, options, (id) => images[id]);
       if (
-        asset.platformId === 'linkedin' &&
+        platform.maxBytes &&
         ['png', 'jpeg', 'webp'].includes(format) &&
-        blob.size > 8 * 1024 * 1024
+        blob.size > platform.maxBytes
       )
         throw new Error(
-          'O arquivo excede 8 MB. Reduza a resolução ou a qualidade para o LinkedIn.',
+          `O arquivo excede ${(platform.maxBytes! / 1024 / 1024).toFixed(0)} MB deste perfil. Reduza resolução ou qualidade.`,
         );
       download(blob, `${filename(asset.name)}.${format === 'jpeg' ? 'jpg' : format}`);
       setDone(true);
@@ -88,8 +95,10 @@ export function ExportDialog({
               <Field label="Resolução">
                 <select
                   aria-label="Escala de exportação"
-                  defaultValue="1"
+                  value={scale}
                   onChange={(e) => {
+                    setScale(e.target.value);
+                    setDone(false);
                     if (e.target.value !== 'custom') {
                       setWidth(asset.document.width * Number(e.target.value));
                       setHeight(asset.document.height * Number(e.target.value));
@@ -119,7 +128,11 @@ export function ExportDialog({
                     max="8000"
                     value={height || ''}
                     disabled={preserve}
-                    onChange={(e) => setHeight(Number(e.target.value))}
+                    onChange={(e) => {
+                      setScale('custom');
+                      setDone(false);
+                      setHeight(Number(e.target.value));
+                    }}
                   />
                 </Field>
               </div>
@@ -154,6 +167,19 @@ export function ExportDialog({
               ? 'HTML com tabela e estilos inline. Abra o arquivo, copie a assinatura renderizada e cole no Gmail. A versão HTML preserva texto e links; fotos e composição gráfica ficam na exportação de imagem.'
               : platform.hint}
           </p>
+          {platformWarnings(asset.platformId, { ...asset.document, width, height }, format).map(
+            (note) => (
+              <p className="platform-hint" key={note}>
+                {note}
+              </p>
+            ),
+          )}
+          {!preserve && width / height !== asset.document.width / asset.document.height && (
+            <p className="platform-hint">
+              A proporção mudou: a imagem será esticada. Para recompor o conteúdo, altere as
+              dimensões no editor.
+            </p>
+          )}
           {!result.success && <ErrorNotice message={result.error.issues[0].message} />}
           {error && <ErrorNotice message={error} />}
           <Button
@@ -168,6 +194,20 @@ export function ExportDialog({
               : done
                 ? 'Exportado · baixar novamente'
                 : 'Exportar ' + format.toUpperCase()}
+          </Button>
+          <Button
+            variant="subtle"
+            className="full"
+            disabled={busy}
+            onClick={() => {
+              try {
+                onConfiguration(asset);
+              } catch (e) {
+                setError((e as Error).message);
+              }
+            }}
+          >
+            Exportar configurações JSON
           </Button>
           <Button
             variant="subtle"

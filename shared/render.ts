@@ -49,14 +49,30 @@ export function renderSvg(value: AssetDocument, image: ImageResolver = () => und
     .join('')
     .slice(0, 2)
     .toUpperCase();
+  const resolve = (id: string | null) => {
+    const data = id ? image(id) : undefined;
+    if (data && !/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(data))
+      throw new Error('Use imagens raster incorporadas da biblioteca.');
+    return data;
+  };
   let elements = `<rect width="${w}" height="${h}" fill="${c.background}"/>`;
+  const background = resolve(d.backgroundImageId);
+  if (background) {
+    const bw = w * l.backgroundZoom,
+      bh = h * l.backgroundZoom;
+    elements += `<image href="${escape(background)}" x="${-(bw - w) / 2 + (w * l.backgroundOffsetX) / 100}" y="${-(bh - h) / 2 + (h * l.backgroundOffsetY) / 100}" width="${bw}" height="${bh}" opacity="${l.backgroundOpacity}" preserveAspectRatio="xMidYMid slice"/>`;
+  }
   if (l.style === 'studio')
     elements += `<defs><radialGradient id="glow"><stop stop-color="${c.accent}" stop-opacity=".23"/><stop offset="1" stop-color="${c.accent}" stop-opacity="0"/></radialGradient></defs><ellipse cx="${w * 0.87}" cy="${h * 0.3}" rx="${w * 0.4}" ry="${h * 1.7}" fill="url(#glow)"/><rect x="0" y="0" width="${Math.max(4, w * 0.005)}" height="${h}" fill="${c.accent}"/>`;
   if (l.style === 'split')
     elements += `<path d="M ${w * 0.65} 0 H ${w} V ${h} H ${w * 0.5} Z" fill="${c.accent}" opacity=".13"/><circle cx="${w * 0.86}" cy="${h * 0.5}" r="${h * 0.9}" fill="none" stroke="${c.accent}" stroke-opacity=".22"/>`;
-  const photo = d.photoId ? image(d.photoId) : undefined;
+  const photo = resolve(d.photoId);
   if (l.showAvatar) {
-    elements += `<defs><clipPath id="photo"><circle cx="${ax + avatarSize / 2}" cy="${ay + avatarSize / 2}" r="${avatarSize / 2}"/></clipPath></defs><circle cx="${ax + avatarSize / 2}" cy="${ay + avatarSize / 2}" r="${avatarSize / 2}" fill="${c.accent}" fill-opacity=".15" stroke="${c.accent}" stroke-width="2"/>`;
+    const clip =
+      l.photoShape === 'square'
+        ? `<rect x="${ax}" y="${ay}" width="${avatarSize}" height="${avatarSize}"/>`
+        : `<circle cx="${ax + avatarSize / 2}" cy="${ay + avatarSize / 2}" r="${avatarSize / 2}"/>`;
+    elements += `<defs><clipPath id="photo">${clip}</clipPath></defs><g fill="${c.accent}" fill-opacity=".15" stroke="${c.accent}" stroke-width="2">${clip}</g>`;
     if (photo) {
       const size = avatarSize * l.photoZoom,
         px = ax - (size - avatarSize) / 2 + (avatarSize * l.photoOffsetX) / 100,
@@ -67,11 +83,13 @@ export function renderSvg(value: AssetDocument, image: ImageResolver = () => und
   }
   if (d.composition !== 'avatar') {
     const available = Math.max(
-      50,
-      w - x - (l.showQr ? (Math.min(w, h) * l.qrSize) / 100 + w * 0.05 : w * 0.05),
+      1,
+      l.textWidth
+        ? Math.min(w - x, (w * l.textWidth) / 100)
+        : w - x - (l.showQr ? (Math.min(w, h) * l.qrSize) / 100 + w * 0.05 : w * 0.05),
     );
-    const anchor = l.align === 'center' ? 'middle' : 'start';
-    const tx = l.align === 'center' ? x + available / 2 : x;
+    const anchor = l.align === 'center' ? 'middle' : l.align === 'right' ? 'end' : 'start';
+    const tx = l.align === 'center' ? x + available / 2 : l.align === 'right' ? x + available : x;
     const text = (value: string, dy: number, size: number, color: string, weight = 400) =>
       `<text x="${tx}" y="${y + dy}" text-anchor="${anchor}" font-size="${size}" font-weight="${weight}" fill="${color}">${escape(value)}</text>`;
     const fs = l.fontSize,
@@ -81,23 +99,25 @@ export function renderSvg(value: AssetDocument, image: ImageResolver = () => und
     names.forEach((line, i) => {
       elements += text(line, space * (i + 0.95), fs, c.primary, 700);
     });
-    let offset = space * (names.length + 0.75);
-    const role = [t.role, t.company].filter(Boolean).join(' · ');
-    lines(role, Math.max(8, Math.floor(available / (fs * 0.3))), 1).forEach((line) => {
-      elements += text(line, offset, fs * 0.5, c.primary, 500);
-    });
-    offset += space * 0.6;
-    for (const line of lines(t.tagline, Math.max(8, Math.floor(available / (fs * 0.23))), 2)) {
-      elements += text(line, offset, fs * 0.4, c.secondary);
-      offset += space * 0.46;
+    if (l.showDetails) {
+      let offset = space * (names.length + 0.75);
+      const role = [t.role, t.company].filter(Boolean).join(' · ');
+      lines(role, Math.max(8, Math.floor(available / (fs * 0.3))), 1).forEach((line) => {
+        elements += text(line, offset, fs * 0.5, c.primary, 500);
+      });
+      offset += space * 0.6;
+      for (const line of lines(t.tagline, Math.max(8, Math.floor(available / (fs * 0.23))), 2)) {
+        elements += text(line, offset, fs * 0.4, c.secondary);
+        offset += space * 0.46;
+      }
+      offset += space * 0.3;
+      const contact = [t.email, t.site.replace(/^https?:\/\//, '').replace(/\/$/, '')]
+        .filter(Boolean)
+        .join('  ·  ');
+      lines(contact, Math.max(8, Math.floor(available / (fs * 0.21))), 1).forEach((line) => {
+        elements += text(line, offset, fs * 0.35, c.secondary);
+      });
     }
-    offset += space * 0.3;
-    const contact = [t.email, t.site.replace(/^https?:\/\//, '').replace(/\/$/, '')]
-      .filter(Boolean)
-      .join('  ·  ');
-    lines(contact, Math.max(8, Math.floor(available / (fs * 0.21))), 1).forEach((line) => {
-      elements += text(line, offset, fs * 0.35, c.secondary);
-    });
   }
   if (l.showQr && t.qrUrl) {
     const qr = qrCode(0, 'M');
@@ -116,9 +136,9 @@ export function renderSvg(value: AssetDocument, image: ImageResolver = () => und
           path += `M${qx + (col + 4) * cell},${qy + (r + 4) * cell}h${cell}v${cell}h-${cell}z`;
     elements += `<path d="${path}" fill="#111827"/>`;
   }
-  const logo = d.logoId ? image(d.logoId) : undefined;
+  const logo = resolve(d.logoId);
   if (logo)
-    elements += `<image href="${escape(logo)}" x="${w * 0.88}" y="${h * 0.8}" width="${w * 0.08}" height="${h * 0.14}" preserveAspectRatio="xMidYMid meet"/>`;
+    elements += `<image href="${escape(logo)}" x="${(w * l.logoX) / 100}" y="${(h * l.logoY) / 100}" width="${l.logoSize ? (Math.min(w, h) * l.logoSize) / 100 : w * 0.08}" height="${l.logoSize ? (Math.min(w, h) * l.logoSize) / 100 : h * 0.14}" preserveAspectRatio="xMidYMid meet"/>`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${escape(t.name)}" style="font-family:${font}">${elements}</svg>`;
 }
 export function renderEmail(value: AssetDocument): string {

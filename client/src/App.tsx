@@ -33,12 +33,14 @@ import {
   type Profile,
   type Template,
 } from '../../shared/model';
+import { portableFile, portableSchema, type Portable } from '../../shared/portable';
 import { api, ApiError, download, fileBase64, filename, token } from './api';
 import { Busy, Empty, ErrorNotice, Field } from './components/ui';
 import { Preview } from './components/Preview';
 import { Editor } from './components/Editor';
 import { ExportDialog } from './components/ExportDialog';
 import { ProfileEditor } from './components/ProfileEditor';
+import { TemplateEditor } from './components/TemplateEditor';
 import { TemplateLibrary } from './components/TemplateLibrary';
 import { MediaLibrary } from './components/MediaLibrary';
 import { NewAsset, NewProfile } from './components/CreationDialogs';
@@ -52,6 +54,7 @@ export default function App() {
     [templates, setTemplates] = useState<Template[]>([]),
     [media, setMedia] = useState<Media[]>([]),
     [images, setImages] = useState<Record<string, string>>({});
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [view, setViewState] = useState<View>('assets'),
     [identityDirty, setIdentityDirty] = useState(false),
     [filter, setFilter] = useState('all'),
@@ -187,7 +190,14 @@ export default function App() {
       assets: [a],
       templates: [],
       media: b.media.filter((m) =>
-        [p.kit.photoId, p.kit.logoId, a.document.photoId, a.document.logoId].includes(m.id),
+        [
+          p.kit.photoId,
+          p.kit.logoId,
+          p.kit.backgroundImageId,
+          a.document.photoId,
+          a.document.logoId,
+          a.document.backgroundImageId,
+        ].includes(m.id),
       ),
       revisions: [
         { id: crypto.randomUUID(), assetId: a.id, version: 1, snapshot: a, createdAt: now },
@@ -199,6 +209,32 @@ export default function App() {
     );
     setNotice('Projeto exportado com as imagens e configurações.');
   }
+  function portableJson(
+    source: { name: string; platformId: Asset['platformId']; document: Asset['document'] },
+    kind: Portable['kind'],
+  ) {
+    const file = portableFile(
+      source,
+      kind,
+      media.map((m) => ({
+        id: m.id,
+        name: m.name,
+        mime: 'image/png' as const,
+        width: m.width,
+        height: m.height,
+        data: (images[m.id] ?? '').replace(/^data:image\/png;base64,/, ''),
+      })),
+    );
+    download(
+      new Blob([JSON.stringify(file)], { type: 'application/json' }),
+      filename(source.name) + '.' + kind + '.json',
+    );
+    setNotice(
+      kind === 'template'
+        ? 'Modelo exportado com as imagens.'
+        : 'Configuração editável exportada com as imagens.',
+    );
+  }
   async function importFile(file: File | undefined) {
     if (!file) return;
     await perform(async () => {
@@ -206,8 +242,27 @@ export default function App() {
         throw new Error(
           'O JSON deve ter até 24 MB. Para arquivos maiores, use o backup PostgreSQL descrito na documentação.',
         );
-      const data = JSON.parse(await file.text());
-      if (data?._type === 'signature-banner-config') {
+      let data;
+      try {
+        data = JSON.parse(await file.text());
+      } catch {
+        throw new Error(
+          'Arquivo JSON inválido. Exporte um projeto, modelo ou configuração compatível.',
+        );
+      }
+      if (data?.type === 'identity-studio-portable') {
+        if (!profile) throw new Error('Crie um contexto antes de importar.');
+        const file = portableSchema.parse(data);
+        const result = await api<{ kind: 'asset' | 'template'; record: Asset | Template }>(
+          '/import/portable',
+          'POST',
+          { profileId: profile.id, file },
+        );
+        await refresh();
+        if (result.kind === 'asset') setSelected(result.record as Asset);
+        else setView('templates');
+        setNotice('Arquivo editável importado com novas referências de imagem neste contexto.');
+      } else if (data?._type === 'signature-banner-config') {
         if (!profile) throw new Error('Crie um contexto para importar a configuração antiga.');
         const a = await api<Asset>('/import/legacy', 'POST', {
           profileId: profile.id,
@@ -216,7 +271,9 @@ export default function App() {
         });
         await refresh();
         setSelected(a);
-        setNotice('Banner antigo importado. Confira o layout no editor.');
+        setNotice(
+          'Configuração antiga importada. Status e especialidades foram adaptados ao texto; animação, temas alternativos e cor exclusiva do negrito não são transferidos. Confira o layout.',
+        );
       } else {
         if (
           !window.confirm(
@@ -829,6 +886,9 @@ export default function App() {
               images={images}
               templates={templates}
               busy={busy}
+              onExport={(t) => perform(async () => portableJson(t, 'template'))}
+              onEdit={setEditingTemplate}
+              onImport={() => importRef.current?.click()}
               onUse={(t) => {
                 setTemplateChoice(t);
                 setNewAsset(true);
@@ -1018,6 +1078,19 @@ export default function App() {
           }}
         />
       )}
+      {editingTemplate && (
+        <TemplateEditor
+          key={editingTemplate.id}
+          template={editingTemplate}
+          media={media}
+          images={images}
+          onClose={() => setEditingTemplate(null)}
+          onSaved={(t) => {
+            setTemplates((current) => current.map((old) => (old.id === t.id ? t : old)));
+            setNotice('Modelo atualizado.');
+          }}
+        />
+      )}
       {exporting && (
         <ExportDialog
           key={exporting.id}
@@ -1025,6 +1098,7 @@ export default function App() {
           images={images}
           onClose={() => setExporting(null)}
           onJson={projectJson}
+          onConfiguration={(a) => portableJson(a, 'configuration')}
         />
       )}
       <input
