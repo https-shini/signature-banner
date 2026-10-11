@@ -4,13 +4,19 @@
 
 O repositório já utiliza GitHub Pages a partir da raiz de `main`. Nessa hospedagem, a página inicial encaminha para `legacy/`, preservando o editor original sem alterar a configuração existente. A aplicação completa depende da API e deve ser publicada na Render. A disponibilidade do site estático não comprova funcionamento de Identity Studio ou persistência no Supabase.
 
+## Retorno OAuth de um cliente na nuvem
+
+`tools/cloud-oauth-relay.mjs` é um transporte temporário para o callback de um cliente OAuth oficial executado na nuvem. Ele valida o state e o emissor configurado (`iss`), preserva esse campo para o cliente oficial, protege os endpoints internos com uma chave aleatória, expira os resultados e permite recuperação uma única vez. Não recebe tokens de acesso, credenciais PostgreSQL ou o verificador PKCE, não registra requisições e não usa disco para os callbacks. A troca do código pelo token acontece no cliente oficial. Execute seus testes com `node --test tests/cloud-oauth-relay.test.mjs`.
+
+O relay não é a aplicação nem comprova acesso ao banco. Após concluir a autenticação, restaure o comando de startup `npm start`, remova a variável temporária `OAUTH_RELAY_TOKEN` e valide novamente a aplicação real. O serviço final deve seguir o Blueprint; não mantenha esse receptor como endpoint da aplicação.
+
 ## Configuração preparada e acesso necessário
 
 `render.yaml` define um único Web Service **plan: free**, com build `npm ci --include=dev && npm run build`, startup `npm start` e health check `/healthz`. Frontend e backend usam a mesma URL pública; os endpoints ficam sob `/api`. A porta vem de `PORT`, definida pela Render, e o processo escuta em `0.0.0.0`.
 
 Antes de criar serviços, consulte os projetos e serviços existentes pelas integrações autorizadas, confira plano e cotas e reuse os recursos adequados. Não habilite plano pago, disco persistente pago, faturamento ou upgrade automático. O Blueprint não cria um banco Render: o PostgreSQL gratuito da Render expira; a persistência deste projeto pertence ao Supabase.
 
-Nesta tarefa, os plugins de Render/Supabase não foram expostos como ferramentas e não havia suas variáveis de autenticação no processo. Consultas sem autenticação às APIs de gerenciamento receberam HTTP 401. Não foram criados serviços externos, executadas migrations no Supabase nem publicados URLs de produção. Arquivos de configuração não são evidência de publicação.
+O serviço Render `identify` (`srv-db5j9t3bc2fs7393moug`) foi criado no plano Free após inspeção dos serviços existentes. O projeto Supabase `Identify` (`cdjpvlolpxzcrvufmeou`) pertence à organização Black404 Project, também Free; o custo de criação informado pela API foi US$ 0/mês. A autenticação das duas plataformas foi verificada por chamadas MCP reais. A disponibilidade da aplicação completa e seus testes devem ser conferidos no relatório de validação; um callback OAuth ou arquivo de configuração não comprova a publicação.
 
 ## Variáveis do backend
 
@@ -32,7 +38,7 @@ Cadastre segredos nos mecanismos seguros do serviço, nunca em Git, logs, fronte
 
 A conexão SQL cria apenas o schema `identity_studio`. A migration `server/migrations/001_initial.sql` é versionada e executada com transação/advisory lock no startup. Revise a conexão para garantir que pertence ao projeto correto. Não há reset, remoção de schemas alheios ou alterações de tabelas existentes.
 
-RLS fica habilitado em todas as tabelas. Não crie políticas de acesso anônimo, não exponha esse schema no Data API e mantenha a conexão privilegiada somente no servidor. Use uma conexão suportada pelo Supabase com verificação TLS; não desative a validação de certificados para contornar falhas.
+O usuário SQL `identify_backend` possui apenas o schema `identity_studio`, sem privilégios de superusuário, criação de bancos ou criação de roles. Sua credencial é configurada separadamente das migrations e não deve ser registrada nelas. RLS fica habilitado em todas as tabelas. Não crie políticas de acesso anônimo, não exponha esse schema no Data API e mantenha a conexão privilegiada somente no servidor. Use uma conexão suportada pelo Supabase com verificação TLS; não desative a validação de certificados para contornar falhas.
 
 O adaptador verifica o bucket configurado antes de criar um novo. O bucket precisa ser **privado**, aceitar apenas PNG normalizado e ter limite de 5 MB por objeto. Objetos são identificados por `<perfil>/<imagem>.png`; nenhuma URL pública é necessária. Ao reutilizar um projeto, confira a capacidade e os objetos existentes antes de escolher o bucket. A API autenticada lê os objetos pelo backend.
 
