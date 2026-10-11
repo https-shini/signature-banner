@@ -2,7 +2,7 @@
 
 ## Site estático existente
 
-O repositório já utiliza GitHub Pages. O workflow `pages.yml` publica exclusivamente `legacy/` para preservar o editor original nessa URL. Configure Pages para usar GitHub Actions; a aplicação completa depende da API e deve ser publicada na Render. A disponibilidade do site estático não comprova funcionamento de Identity Studio ou persistência no Supabase.
+O repositório já utiliza GitHub Pages a partir da raiz de `main`. Nessa hospedagem, a página inicial encaminha para `legacy/`, preservando o editor original sem alterar a configuração existente. A aplicação completa depende da API e deve ser publicada na Render. A disponibilidade do site estático não comprova funcionamento de Identity Studio ou persistência no Supabase.
 
 ## Configuração preparada e acesso necessário
 
