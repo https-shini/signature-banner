@@ -1,5 +1,9 @@
 # Render gratuita e Supabase
 
+## Site estático existente
+
+O repositório já utiliza GitHub Pages. O workflow `pages.yml` publica exclusivamente `legacy/` para preservar o editor original nessa URL. Configure Pages para usar GitHub Actions; a aplicação completa depende da API e deve ser publicada na Render. A disponibilidade do site estático não comprova funcionamento de Identity Studio ou persistência no Supabase.
+
 ## Configuração preparada e acesso necessário
 
 `render.yaml` define um único Web Service **plan: free**, com build `npm ci --include=dev && npm run build`, startup `npm start` e health check `/healthz`. Frontend e backend usam a mesma URL pública; os endpoints ficam sob `/api`. A porta vem de `PORT`, definida pela Render, e o processo escuta em `0.0.0.0`.
