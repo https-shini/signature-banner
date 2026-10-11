@@ -1,0 +1,43 @@
+{
+  "name": "identity-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "dev": "tsx watch server/index.ts",
+    "dev:client": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "start": "tsx server/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "test:e2e": "tsx tests/browser.ts"
+  },
+  "dependencies": {
+    "@fastify/static": "10.1.6",
+    "@supabase/supabase-js": "2.99.3",
+    "dotenv": "17.3.1",
+    "fastify": "5.12.5",
+    "lucide-react": "0.468.0",
+    "pg": "8.20.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
+    "sharp": "0.35.5",
+    "tsx": "4.20.6",
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@types/node": "24.10.0",
+    "@types/pg": "8.18.0",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "@vitejs/plugin-react": "5.1.0",
+    "playwright-core": "1.56.1",
+    "prettier": "3.8.3",
+    "typescript": "5.9.3",
+    "vite": "7.3.7"
+  }
+}

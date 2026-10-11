@@ -1,0 +1,31 @@
+# Um Web Service gratuito serve frontend e API na mesma origem.
+services:
+  - type: web
+    name: identity-studio
+    runtime: node
+    plan: free
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeploy: false
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: NODE_VERSION
+        value: 24
+      - key: STORAGE_DRIVER
+        value: supabase
+      - key: DATABASE_SSL
+        value: 'true'
+      - key: APP_ACCESS_TOKEN
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_STORAGE_BUCKET
+        value: identity-studio

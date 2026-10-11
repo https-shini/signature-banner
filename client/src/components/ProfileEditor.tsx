@@ -1,0 +1,152 @@
+import { useEffect, useState } from 'react';
+import { Save, Check, Trash2 } from 'lucide-react';
+import { profileInputSchema, type Media, type Profile } from '../../../shared/model';
+import { api } from '../api';
+import { DocumentFields } from './DocumentFields';
+import { Preview } from './Preview';
+import { ErrorNotice, Field } from './ui';
+export function ProfileEditor({
+  profile,
+  images,
+  media,
+  onSaved,
+  onDelete,
+  onDirtyChange,
+}: {
+  profile: Profile;
+  images: Record<string, string>;
+  media: Media[];
+  onSaved: (p: Profile) => void;
+  onDelete: () => void;
+  onDirtyChange: (dirty: boolean) => void;
+}) {
+  const [draft, setDraft] = useState(profile),
+    [saved, setSaved] = useState(profile),
+    [tab, setTab] = useState('content'),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState('');
+  const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
+  useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
+  useEffect(() => {
+    onDirtyChange(dirty);
+  }, [dirty, onDirtyChange]);
+  useEffect(() => {
+    const leave = (e: BeforeUnloadEvent) => {
+      if (dirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    };
+    window.addEventListener('beforeunload', leave);
+    return () => window.removeEventListener('beforeunload', leave);
+  }, [dirty]);
+  return (
+    <div className="identity-page">
+      <div className="page-heading">
+        <div>
+          <p className="eyebrow">A BASE DE TUDO</p>
+          <h1>Minha identidade</h1>
+          <p className="muted">Um ponto de partida consistente para todos os seus canais.</p>
+        </div>
+        <button
+          className="button primary"
+          disabled={busy || !dirty}
+          onClick={async () => {
+            setBusy(true);
+            setError('');
+            try {
+              const input = profileInputSchema.parse({
+                name: draft.name,
+                description: draft.description,
+                kit: draft.kit,
+              });
+              const p = await api<Profile>(`/profiles/${profile.id}`, 'PUT', input);
+              setDraft(p);
+              setSaved(p);
+              onSaved(p);
+            } catch (e) {
+              setError((e as Error).message);
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {dirty ? <Save size={16} /> : <Check size={16} />}Salvar identidade
+        </button>
+      </div>
+      {error && <ErrorNotice message={error} />}
+      <div className="identity-layout">
+        <section className="surface identity-preview">
+          <p className="eyebrow">SUA IDENTIDADE PROFISSIONAL</p>
+          <Preview document={draft.kit} images={images} />
+          <div className="identity-note">
+            <h3>Consistência começa aqui.</h3>
+            <p>
+              Seus novos ativos herdam estas informações. Para atualizar um ativo existente, abra o
+              editor e escolha “Aplicar identidade”. Cada contexto mantém sua própria biblioteca.
+            </p>
+          </div>
+          <div className="two-fields">
+            <Field label="Nome do contexto">
+              <input
+                value={draft.name}
+                maxLength={80}
+                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+              />
+            </Field>
+            <Field label="Descrição">
+              <input
+                value={draft.description}
+                maxLength={200}
+                onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+              />
+            </Field>
+          </div>
+          <button
+            className="button danger subtle"
+            disabled={busy}
+            onClick={() => {
+              if (
+                (!dirty || window.confirm('Descartar alterações não salvas?')) &&
+                window.confirm(
+                  `Excluir o contexto “${profile.name}”, seus ativos, modelos, fotos e histórico? Esta ação não pode ser desfeita. Exporte um backup antes.`,
+                )
+              )
+                onDelete();
+            }}
+          >
+            <Trash2 size={15} />
+            Excluir este contexto
+          </button>
+        </section>
+        <section className="surface identity-settings">
+          <div className="editor-tabs" role="tablist" aria-label="Identidade visual">
+            {[
+              ['content', 'Informações'],
+              ['appearance', 'Cores e fontes'],
+              ['media', 'Fotos e logo'],
+            ].map(([value, label]) => (
+              <button
+                role="tab"
+                aria-selected={tab === value}
+                key={value}
+                className={tab === value ? 'active' : ''}
+                onClick={() => setTab(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="editor-fields">
+            <DocumentFields
+              tab={tab}
+              document={draft.kit}
+              onChange={(kit) => setDraft({ ...draft, kit })}
+              media={media}
+            />
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}

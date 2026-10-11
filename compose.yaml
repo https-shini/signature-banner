@@ -1,0 +1,18 @@
+# Desenvolvimento local somente. Acesso sem senha restrito à interface loopback.
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - '127.0.0.1:54329:5432'
+    environment:
+      POSTGRES_DB: identity_studio
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - identity-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d identity_studio']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+volumes:
+  identity-postgres:
