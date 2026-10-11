@@ -1,0 +1,6 @@
+node_modules
+dist
+legacy
+shared/qrcode.js
+data
+package-lock.json

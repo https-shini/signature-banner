@@ -1,167 +1,71 @@
-# Signature Banner
+# Identity Studio
 
-Banner de assinatura profissional em HTML/CSS/JS puro — editável em tempo
-real, com tema claro/escuro, exportação em PNG/JPEG/WebP de alta resolução,
-100% offline e sem dependências externas (nem build, nem CDN).
+Central pessoal de identidade visual: gerencie banners, assinaturas de e-mail e fotos de perfil com contextos separados, biblioteca de imagens, modelos, histórico e exportação. Evolução do Signature Banner, cujo código original permanece em [`legacy/`](legacy/).
 
----
+## Arquitetura
 
-## Funcionalidades
+- **Frontend:** React 19, TypeScript e Vite. Interface em português, responsiva e sem fontes, analytics ou CDNs externos.
+- **API:** Fastify com contratos Zod compartilhados, validação de arquivos e autenticação por chave pessoal.
+- **Persistência:** PostgreSQL. Produção usa Supabase; não usa SQLite nem o disco efêmero da Render para dados.
+- **Imagens:** Supabase Storage privado em produção. Sharp normaliza uploads PNG/JPEG/WebP e remove metadados; os arquivos não ficam dentro do banco.
+- **Renderização:** SVG compartilhado entre preview e exportação. Rasterização no navegador para PNG/JPEG/WebP; HTML seguro com links para assinaturas.
+- **Deploy:** um Web Service gratuito na Render serve frontend e API na mesma origem, sem CORS ou URL de API embutida no bundle.
 
-- **Preview ao vivo** — qualquer alteração reflete instantaneamente no banner.
-- **Tema claro/escuro/auto** — o tema do banner e da interface mudam juntos;
-  `auto` segue `prefers-color-scheme`.
-- **Cores semânticas** — `background`, `textPrimary`, `textSecondary`,
-  `accent`, `border`, cada uma com variante clara e escura, editáveis por
-  seletor de cor ou hex validado.
-- **Paletas de acento** — Crimson, Indigo, Esmeralda, Âmbar, Azul, Violeta.
-- **QR Code dinâmico** — gerado localmente (sem CDN), com contraste garantido
-  em qualquer tema.
-- **Foto de perfil** — substitui o monograma (drag & drop).
-- **Exportação avançada** — formatos PNG/JPEG/WebP, resoluções predefinidas
-  (1×/2×/3×/auto) e **resolução personalizada** em pixels, com preservação de
-  proporção, qualidade e validação de limites.
-- **Importar/Exportar configuração** — salva e restaura todo o estado em JSON.
-- **Zero dependências** — sem framework, sem bundler, sem servidor.
+Leia o [diagnóstico e as decisões](docs/ARCHITECTURE.md), o [guia de desenvolvimento](docs/DEVELOPMENT.md) e o [guia de implantação](docs/DEPLOYMENT.md).
 
----
+## Desenvolvimento
 
-## Início rápido
+Requer Node **24**, npm e PostgreSQL **17**. Docker é uma opção para o banco local.
 
 ```bash
-git clone https://github.com/seu-usuario/signature-banner.git
-cd signature-banner
-open index.html        # ou: python3 -m http.server  →  http://localhost:8000
+npm ci
+docker compose up -d postgres
+cp .env.example .env
+npm run build
+npm start
 ```
 
-Não é necessário instalar nada.
+O servidor local escuta na porta 3000. Para atualização automática, use `npm run dev` para a API e `npm run dev:client` em outra sessão para o frontend (porta 5173). O Vite encaminha `/api` para a API local.
 
----
+O Docker permite acesso sem senha **somente na interface loopback**, para desenvolvimento. Não o exponha na rede. Na nuvem, use as credenciais do Supabase no backend. `.env` e `data/` são ignorados pelo Git.
 
-## Personalização
+## Funcionalidades implementadas
 
-### Método 1 — Painel visual
+- CRUD de contextos e ativos; duplicação, busca por nome/tags, favoritos, filtros e ordenação.
+- Presets de LinkedIn (1584×396), assinatura (600×180), banner (1200×320) e avatar (800×800), com dimensões editáveis.
+- Editor de conteúdo, paleta, fontes locais, composição, espaçamento, posição, QR Code e seleção de fotos/logos; zoom e deslocamento da foto.
+- Identidade reutilizável: novos ativos herdam o kit; atualizar ativos existentes é uma ação explícita.
+- Modelos prontos e personalizados; salvar, duplicar, renomear e criar ativos a partir de modelos.
+- Cada salvamento gera uma revisão; restauração cria outra revisão e conflitos concorrentes retornam HTTP 409.
+- Exportação PNG/JPEG/WebP/SVG com resolução, qualidade e proporção; assinatura HTML com contatos clicáveis.
+- Backup JSON de contextos, imagens, modelos e revisões; restauração aditiva com novos IDs, validação de referências e transação PostgreSQL.
+- Exportação de projeto e importação das configurações v3 do Signature Banner.
 
-Abra `index.html`, edite as seções (Aparência, Conteúdo, Mídia, Layout,
-Exportação), escolha formato/resolução e clique em **Exportar imagem**. Use
-**Exportar/Importar configuração** para versionar o estado em JSON.
+## Validação
 
-### Método 2 — `src/js/config.js`
+Com o PostgreSQL local ativo:
 
-`config.js` é o único arquivo que você precisa editar. Estrutura resumida:
-
-```js
-const BANNER_CONFIG = {
-  defaults: {
-    eyebrow: "Software Developer",
-    name:    "**Guilherme de Souza Cruz**", // **negrito** parcial
-    role:    "Desenvolvedor de Software",
-    empresa: "",                              // opcional (ao lado do cargo)
-    specs:   "Full Stack; AI & Automation",   // separados por ;
-    tagline: "Linha 1<br>Linha 2",            // <br> quebra linha
-    email:   "voce@email.com",
-    site:    "seusite.com.br",
-    qrUrl:   "https://links.seusite.com.br",
-  },
-
-  theme: {
-    mode: "dark",          // "light" | "dark" | "auto"
-    palette: "crimson",    // chave de palettes
-    palettes: { crimson: { accent: "#e11d48", signal: "#4f46e5" }, /* ... */ },
-    tokens: {              // cada cor: variante light + dark
-      background:    { light: "#ffffff", dark: "#0b1220" },
-      textPrimary:   { light: "#0f172a", dark: "#f1f5f9" },
-      textSecondary: { light: "#475569", dark: "#94a3b8" },
-      accent:        { light: "#e11d48", dark: "#e11d48" },
-      border:        { light: "#e6e8ee", dark: "#22304a" },
-    },
-  },
-
-  export: {
-    format: "png",         // "png" | "jpeg" | "webp"
-    quality: 0.92,         // 0..1 (JPEG/WebP)
-    defaultSize: "medium", // small | medium | large | auto | custom
-    custom: { width: 2400, height: 640, preserveAspect: true },
-    filename: "banner-assinatura",
-  },
-
-  brand: { /* fontes e dimensões lógicas do banner */ },
-};
+```bash
+npm run build
+npm test
+CHROMIUM_PATH=/usr/bin/chromium npm run test:e2e
+npm audit --audit-level=moderate
 ```
 
-### Sintaxe especial
+Os testes de API usam schemas exclusivos no PostgreSQL real, eliminados ao terminar. Os testes de navegador iniciam sua própria API, validam fluxos e downloads, verificam acessibilidade com axe e salvam evidências em `test-results/`. Nunca use credenciais de produção nos testes; configure `TEST_DATABASE_URL` para um banco dedicado.
 
-| Campo | Sintaxe | Resultado |
-|-------|---------|-----------|
-| `name` | `Primeiro **Último**` | "Último" em negrito |
-| `tagline` | `Linha 1<br>Linha 2` | Quebra de linha |
-| `specs` | `React; Node; SQL` | Itens com bullets |
+## Limites
 
----
+Esta versão é para uma pessoa com vários contextos; não é um serviço multiusuário. A chave pessoal é exigida em produção e fica na sessão do navegador após login. Credenciais de Supabase nunca são enviadas ao frontend. Use HTTPS e mantenha backups fora dos serviços hospedados.
 
-## Estrutura do projeto
+Uploads: até 5 MB, 16 megapixels, imagens estáticas normalizadas para até 1600×1600. Exportações: até 8000 px por lado e 40 megapixels. Importação: até 24 MB. Para bibliotecas maiores, veja [backup e recuperação](docs/DEPLOYMENT.md#backup-e-recuperação).
 
-```
-signature-banner/
-├── index.html              ← ponto de entrada (não editar)
-├── src/
-│   ├── css/banner.css       ← tokens de tema (UI) + banner + painel
-│   └── js/
-│       ├── config.js        ← ★ EDITE AQUI — conteúdo, tema, exportação
-│       ├── qrcode.lib.js    ← QR Code (Kazuhiko Arase, MIT) — não editar
-│       ├── theme.js         ← BannerTheme: gestão central de temas
-│       ├── export.js        ← BannerExporter: exportação fiel ao DOM
-│       └── banner.js        ← editor (UI, sync, listeners, bootstrap)
-└── docs/
-    ├── CUSTOMIZATION.md
-    └── DEVELOPMENT.md
-```
+O HTML da assinatura exporta texto e links com tabela e estilos inline; a composição gráfica completa, fotos e QR ficam nas imagens exportadas. A aplicação não instala assinaturas automaticamente no Gmail nem publica capas no LinkedIn. Textos longos podem receber reticências: confira o preview. Fontes próprias, camadas livres, integrações OAuth e colaboração ficam para etapas futuras.
 
-### Ordem de carregamento dos scripts
+## Implantação
 
-```
-qrcode.lib.js → config.js → theme.js → export.js → banner.js
-```
-
-`theme.js`, `export.js` e `banner.js` consomem os globais `qrcode` e
-`BANNER_CONFIG`. A ordem no `index.html` garante isso sem bundler.
-
----
-
-## Exportação — como funciona
-
-`export.js` **não recria o layout**: ele mede o DOM vivo
-(`getBoundingClientRect`) e lê os estilos calculados (`getComputedStyle`) de
-cada elemento, pintando num `<canvas>` off-screen nas mesmas posições, fontes
-e cores exibidas. O que está na tela é o que sai no arquivo.
-
-- **Resoluções**: `small` 1× (1200×320), `medium` 2× (2400×640), `large` 3×
-  (3600×960), `auto` (densidade da tela) e `custom` (px arbitrários).
-- **Proporção**: com "preservar proporção" a escala é uniforme (sem distorção).
-- **Formatos**: PNG (alfa), JPEG (fundo opaco), WebP. Qualidade aplica-se aos
-  formatos com perda.
-- **Limites**: 200–8000 px por lado e guarda de ~40 MP, com validação.
-
-> **E-mail**: links dentro de imagens não são clicáveis na maioria dos
-> clientes. Cole o banner com uma linha de texto real contendo seus links.
-
----
-
-## Compatibilidade
-
-| Navegador | Suporte |
-|-----------|---------|
-| Chrome / Edge 90+ | ✅ |
-| Firefox 90+ | ✅ |
-| Safari 15+ | ✅ |
-
-Requer: `Canvas 2D API`, `CSS custom properties`, `color-mix()`,
-`FileReader`, `prefers-color-scheme`. O `letter-spacing` no canvas tem
-fallback manual para navegadores que não o suportam.
-
----
+O Blueprint [`render.yaml`](render.yaml), o adaptador de Supabase Storage e as migrations estão preparados. Publicação e validação no Supabase/Render dependem de acesso autenticado a essas contas. Esses arquivos não comprovam deploy ou configuração externa concluída. Veja o [registro de validação](docs/VALIDATION.md).
 
 ## Licença
 
-Código sob [MIT](LICENSE). O QR Code embutido (`src/js/qrcode.lib.js`) é de
-**Kazuhiko Arase**, também MIT.
+MIT. O gerador de QR Code de Kazuhiko Arase foi reaproveitado com seus avisos e licença preservados em `shared/qrcode.js` e `LICENSE`.
